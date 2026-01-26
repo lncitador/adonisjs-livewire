@@ -56,7 +56,7 @@ export class SupportScriptsAndAssets extends ComponentHook {
 
         s.push(
           'scripts',
-          await context.component.view.renderRaw(output, context.component.__view_data || {}),
+          await context.component.view.renderRaw(output, context.component.viewData || {}),
           key
         )
       },
@@ -91,7 +91,7 @@ export class SupportScriptsAndAssets extends ComponentHook {
 
         s.push(
           'assets',
-          await context.component.view.renderRaw(output, context.component.__view_data || {}),
+          await context.component.view.renderRaw(output, context.component.viewData || {}),
           key
         )
       },
