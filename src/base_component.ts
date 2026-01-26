@@ -4,68 +4,107 @@ import { Edge } from 'edge.js'
 import { ApplicationService } from '@adonisjs/core/types'
 
 export class BaseComponent {
-  // @ts-ignore
-  protected __id: string
-  // @ts-ignore
-  protected __name: string
-  // @ts-ignore
-  protected __view_path: string
+  // Hard private fields (Runtime private)
+  #id!: string
+  #name!: string
+  #viewPath!: string
+  #view!: ReturnType<Edge['createRenderer']>
+  #viewData: Record<string, any> = {}
 
   declare bindings: any
 
   declare app: ApplicationService
   declare ctx: HttpContext
 
-  declare __view: ReturnType<Edge['createRenderer']>
-  declare __view_data: Record<string, any>
+  // Getters & Setters for controlled access
+  get id(): string {
+    return this.#id
+  }
 
-  get view() {
+  set id(value: string) {
+    this.#id = value
+  }
+
+  get name(): string {
+    return this.#name
+  }
+
+  set name(value: string) {
+    this.#name = value
+  }
+
+  get viewPath(): string {
+    return this.#viewPath
+  }
+
+  set viewPath(path: string) {
+    this.#viewPath = path
+  }
+
+  get view(): ReturnType<Edge['createRenderer']> {
+    if (!this.#view) {
+      throw new Error(`View renderer not initialized for component: ${this.#name}`)
+    }
+
     return {
       share: (data: Record<string, any>) => {
-        return this.__view.share(data)
+        return this.#view.share(data)
       },
 
       render: async (templatePath: string, state?: Record<string, any>) => {
-        this.__view_data = Object.assign({}, this.__view_data || {}, state || {})
-        return await this.__view.render(templatePath, state)
+        this.#viewData = Object.assign({}, this.#viewData || {}, state || {})
+        return await this.#view.render(templatePath, state)
       },
       renderSync: (templatePath: string, state?: Record<string, any>) => {
-        this.__view_data = Object.assign({}, this.__view_data || {}, state || {})
-        return this.__view.renderSync(templatePath, state)
+        this.#viewData = Object.assign({}, this.#viewData || {}, state || {})
+        return this.#view.renderSync(templatePath, state)
       },
       renderRaw: async (contents: string, state?: Record<string, any>, templatePath?: string) => {
-        this.__view_data = Object.assign({}, this.__view_data || {}, state || {})
-        return await this.__view.renderRaw(contents, state, templatePath)
+        this.#viewData = Object.assign({}, this.#viewData || {}, state || {})
+        return await this.#view.renderRaw(contents, state, templatePath)
       },
       renderRawSync: (contents: string, state?: Record<string, any>, templatePath?: string) => {
-        this.__view_data = Object.assign({}, this.__view_data || {}, state || {})
-        return this.__view.renderRawSync(contents, state, templatePath)
+        this.#viewData = Object.assign({}, this.#viewData || {}, state || {})
+        return this.#view.renderRawSync(contents, state, templatePath)
       },
     } as unknown as ReturnType<Edge['createRenderer']>
   }
 
+  set view(renderer: ReturnType<Edge['createRenderer']>) {
+    this.#view = renderer
+  }
+
+  get viewData(): Record<string, any> {
+    return this.#viewData
+  }
+
+  set viewData(data: Record<string, any>) {
+    this.#viewData = data
+  }
+
+  // Compatibility methods (maintained for backward compatibility)
   setId(id: string) {
-    this.__id = id
+    this.id = id
   }
 
   getId() {
-    return this.__id
+    return this.id
   }
 
   setName(name: string) {
-    this.__name = name
+    this.name = name
   }
 
   setViewPath(view: string) {
-    this.__view_path = view
+    this.viewPath = view
   }
 
   getName() {
-    return this.__name
+    return this.name
   }
 
   async render(): Promise<string> {
-    return this.view.render(this.__view_path)
+    return this.view.render(this.viewPath)
   }
 
   skipRender(html?: string) {
