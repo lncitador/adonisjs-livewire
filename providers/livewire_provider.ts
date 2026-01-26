@@ -61,7 +61,7 @@ export default class LivewireProvider {
     app.config.set('app.http.useAsyncLocalStorage', true)
 
     const Livewire = await import('../src/livewire.js').then((m) => m.default)
-    const LivewireTag = await import('../src/livewire_tag.js').then((m) => m.default)
+    const { edgePluginLivewire } = await import('../src/plugins/edge/plugin.js')
 
     const config = this.app.config.get<Config>('livewire', defaultConfig)
     const livewire = new Livewire(app, config)
@@ -70,114 +70,12 @@ export default class LivewireProvider {
       return livewire
     })
 
-    edge.global('livewire', livewire)
-    edge.registerTag(new LivewireTag())
-
-    edge.registerTag({
-      tagName: 'livewireStyles',
-      block: false,
-      seekable: false,
-      compile(_parser, buffer, _token) {
-        buffer.outputRaw(`<link rel="stylesheet" href="/livewire.css?v=${packageJson.version}">`)
-      },
-    })
-
-    edge.registerTag({
-      tagName: 'livewireScripts',
-      block: false,
-      seekable: false,
-      compile(_parser, buffer, token) {
-        buffer.outputExpression(
-          '`<script src="/livewire.js?v=' +
-            packageJson.version +
-            '" data-csrf="${state.request.csrfToken ?? \'\'}" data-update-uri="/livewire/update" data-navigate-once="true"></script>`',
-          token.filename,
-          token.loc.start.line,
-          false
-        )
-      },
-    })
-
-    let regex = /<livewire:([a-zA-Z0-9\.\-]+)([^>]*)\/>/g
-
-    edge.processor.process('raw', (value) => {
-      let raw = value.raw
-
-      // raw = raw.replace("<livewire:styles/>", "@livewireStyles")
-      // raw = raw.replace("<livewire:styles />", "@livewireStyles")
-      // raw = raw.replace("<livewire:scripts/>", "@livewireScripts")
-      // raw = raw.replace("<livewire:scripts />", "@livewireScripts")
-
-      let matches = raw.match(regex)
-
-      if (!matches) {
-        return
-      }
-
-      for (const match of matches) {
-        let [_, component, props] = match.match(/<livewire:([a-zA-Z0-9\.\-:.]+)([^>]*)\/>/) || []
-        let attributes: any = {}
-        let options: any = {}
-        if (props) {
-          let regex = /(@|:|wire:)?([a-zA-Z0-9\-:.]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g
-
-          let matches = props.match(regex)
-          let propsRemainder = props
-
-          if (matches) {
-            for (const match of matches) {
-              let [m, prefix, key, value] =
-                match.match(/(@|:|wire:)?([a-zA-Z0-9\-:.]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/) || []
-              if (prefix === ':' && key !== 'is' && key !== 'component') {
-                attributes[key] = `_____${value}_____`
-              } else if (prefix === 'wire:' && key === 'key') {
-                options.key = `_____${value}_____`
-              } else if (prefix === 'wire:') {
-                if (key === 'model') {
-                  attributes[`wire:${key}`] = '$parent.' + value
-                } else {
-                  attributes[`wire:${key}`] = value
-                }
-              } else {
-                let curlyMatch = value.match(/(\\)?{{(.*?)}}/)
-                if (curlyMatch) {
-                  attributes[`${prefix ?? ''}${key}`] =
-                    `_____\`${value.replace(/\{\{\s*([^}]+)\s*\}\}/g, '${$1}')}\`_____`
-                } else {
-                  attributes[`${prefix ?? ''}${key}`] = value
-                }
-              }
-
-              if (m) {
-                propsRemainder = propsRemainder.replace(m, '')
-              }
-            }
-          }
-
-          propsRemainder
-            .split(' ')
-            .map((prop) => prop.trim())
-            .filter(Boolean)
-            .forEach((prop) => {
-              attributes[prop] = true
-            })
-        }
-
-        if (component === 'dynamic-component' || component === 'is') {
-          component = attributes['component'] ?? attributes['is']
-          delete attributes['component']
-          delete attributes['is']
-        } else {
-          component = `'${component}'`
-        }
-
-        const attrs = JSON.stringify(attributes).replace(/"_____([^"]*)_____"/g, '$1')
-        const opts = JSON.stringify(options).replace(/"_____([^"]*)_____"/g, '$1')
-
-        raw = raw.replace(match, `@livewire(${component}, ${attrs}, ${opts})`)
-      }
-      return raw
-    })
+    /**
+     * Register the Livewire Edge.js plugin
+     * This registers all tags (@livewire, @livewireStyles, @livewireScripts, @script, @assets)
+     * and the processor for <livewire:.../> syntax
+     */
+    edge.use(edgePluginLivewire(this.app, livewire, packageJson.version))
 
     router.get('/livewire.css', async ({ response }) => {
       response.type('text/css')
