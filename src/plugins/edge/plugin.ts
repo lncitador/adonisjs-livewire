@@ -52,20 +52,20 @@ export const edgePluginLivewire = (
     /**
      * Register the `livewire` global used by the `@livewire` tag
      * This function renders a Livewire component
-     * 
+     *
      * The ctx is always available from livewireContext when rendering Edge templates
      * during a Livewire request.
      */
     edge.global('livewire', {
       mount: async (name: string, params?: Record<string, any>, options?: any) => {
         const context = getLivewireContext()
-        
+
         if (!context?.ctx) {
           throw new Error('Cannot access http context. ctx must be available in livewireContext.')
         }
-        
+
         return await livewire.mount(context.ctx, name, params || {}, options || {})
-      }
+      },
     })
 
     /**
