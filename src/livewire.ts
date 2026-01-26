@@ -60,34 +60,42 @@ export default class Livewire {
   }
 
   async trigger(event: string, component: Component, ...params: any[]) {
-    const { context, features } = getLivewireContext()!
+    const context = getLivewireContext()
+    if (!context) return []
+
     const eventBus = await this.app.container.make(EventBus)
 
     // TODO: migrate everything to event bus
     await eventBus.trigger(event, component, ...params)
 
-    const callbacks = await Promise.all(
-      features.map(async (feature) => {
-        feature.setComponent(component)
-        feature.setApp(this.app)
+    const { features } = context
+    const callbacks: any[] = []
+    for (const feature of features) {
+      feature.setComponent(component)
+      feature.setApp(this.app)
 
-        if (event === 'mount') {
-          await feature.callBoot()
-          await feature.callMount(params[0])
-        } else if (event === 'hydrate') {
-          await feature.callBoot()
-          await feature.callHydrate(context.memo, context)
-        } else if (event === 'dehydrate') {
-          await feature.callDehydrate(context)
-        } else if (event === 'render') {
-          return await feature.callRender(...params)
-        } else if (event === 'update') {
-          await feature.callUpdate(params[0], params[1], params[2])
-        } else if (event === 'call') {
-          await feature.callCall(params[1], params[2], params[3])
+      if (event === 'mount') {
+        await feature.callBoot()
+        await feature.callMount(params[0])
+      } else if (event === 'hydrate') {
+        await feature.callBoot()
+        await feature.callHydrate(params[0], params[1])
+      } else if (event === 'dehydrate') {
+        await feature.callDehydrate(params[0])
+      } else if (event === 'render') {
+        const callback = await feature.callRender(...params)
+        if (callback) {
+          callbacks.push(callback)
         }
-      })
-    )
+      } else if (event === 'update') {
+        await feature.callUpdate(params[0], params[1], params[2])
+      } else if (event === 'call') {
+        const callback = await feature.callCall(params[0], params[1], params[3])
+        if (callback) {
+          callbacks.push(callback)
+        }
+      }
+    }
 
     return callbacks
   }
@@ -100,9 +108,8 @@ export default class Livewire {
       const props = Object.getOwnPropertyNames(prototype)
 
       for (const prop of props) {
-        if (prop.startsWith('__')) {
-          continue
-        }
+        // Properties starting with # are automatically excluded by runtime
+        // Only exclude methods that start with __ (like __dispatch, __lazyLoad)
         if (
           [
             'constructor',
@@ -146,13 +153,13 @@ export default class Livewire {
     }
 
     for (const key of Object.keys(component)) {
-      if (key.startsWith('__')) {
+      // Properties starting with # are automatically excluded by runtime
+      // Only exclude methods that start with __ (like __dispatch, __lazyLoad)
+      if (key.startsWith('__') && typeof component[key] === 'function') {
         continue
       }
 
-      if (['app', 'ctx'].includes(key)) {
-        continue
-      }
+      if (['app', 'ctx'].includes(key)) continue
 
       // if ([].includes(key)) {
       //   continue
@@ -177,10 +184,7 @@ export default class Livewire {
     })
 
     return await livewireContext.run({ dataStore, context, features }, async () => {
-      if (
-        options.layout &&
-        (!component.__decorators || !component.__decorators.some((d) => d instanceof Layout))
-      ) {
+      if (options.layout && !component.getDecorators().some((d) => d instanceof Layout)) {
         component.addDecorator(new Layout(options.layout.name))
       }
 
@@ -455,7 +459,7 @@ export default class Livewire {
     }
     renderer.share(Livewire.generateComponentData(component))
 
-    component.__view = renderer
+    component.view = renderer
   }
 
   protected async hydrate(data: any, context: ComponentContext, path: string) {
@@ -572,13 +576,13 @@ export default class Livewire {
 
         if (method === '__dispatch') {
           const features = getLivewireContext()!.features
-          let result = await features[1].callCall('__dispatch', params)
+          let result = await features[1].callCall('__dispatch', params, returnEarly)
           returns.push(result)
         } else if (method === '__lazyLoad') {
           const feature = getLivewireContext()!.features.find(
             (f) => f instanceof SupportLazyLoading
           ) as SupportLazyLoading
-          let result = await feature.callCall('__lazyLoad', params)
+          let result = await feature.callCall('__lazyLoad', params, returnEarly)
           returns.push(result)
         } else {
           //@ts-ignore
@@ -673,7 +677,9 @@ export default class Livewire {
   async dehydrateProperties(component: any, context: ComponentContext) {
     const data = {}
     for (let key in component) {
-      if (key.startsWith('__')) {
+      // Properties starting with # are automatically excluded by runtime
+      // Only exclude methods that start with __ (like __dispatch, __lazyLoad)
+      if (key.startsWith('__') && typeof component[key] === 'function') {
         continue
       }
 
