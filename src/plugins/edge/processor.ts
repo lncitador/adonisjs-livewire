@@ -23,19 +23,19 @@ export function processLivewireComponents(raw: string): string {
   }
 
   for (const match of matches) {
-    let [_, component, props] = match.match(/<livewire:([a-zA-Z0-9\.\-:.]+)([^>]*)\/>/) || []
+    let [, component, props] = match.match(/<livewire:([a-zA-Z0-9\.\-:.]+)([^>]*)\/>/) || []
     let attributes: any = {}
     let options: any = {}
     if (props) {
-      let regex = /(@|:|wire:)?([a-zA-Z0-9\-:.]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g
+      let regexProps = /(@|:|wire:)?([a-zA-Z0-9\-:.]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g
 
-      let matches = props.match(regex)
+      let matchesProps = props.match(regexProps)
       let propsRemainder = props
 
-      if (matches) {
-        for (const match of matches) {
+      if (matchesProps) {
+        for (const matchProp of matchesProps) {
           let [m, prefix, key, value] =
-            match.match(/(@|:|wire:)?([a-zA-Z0-9\-:.]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/) || []
+            matchProp.match(/(@|:|wire:)?([a-zA-Z0-9\-:.]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/) || []
           if (prefix === ':' && key !== 'is' && key !== 'component') {
             attributes[key] = `_____${value}_____`
           } else if (prefix === 'wire:' && key === 'key') {

@@ -13,6 +13,16 @@ export class SupportScriptsAndAssets extends ComponentHook {
   }
 
   static async provide(app: ApplicationService) {
+    // const Server  = await app.container.make('server')
+    // TODO: implement to flush-state
+    // Server.hooks.before(async () => {
+    //   SupportScriptsAndAssets.alreadyRunAssetKeys = []
+    //   SupportScriptsAndAssets.renderedAssets = []
+    // })
+    // on('flush-state', function () {
+    //     SupportScriptsAndAssets.alreadyRunAssetKeys = [];
+    //     SupportScriptsAndAssets.renderedAssets = [];
+    // });
     // Tags @script and @assets are now registered by the Edge plugin
     // See src/plugins/edge/plugin.ts
   }

@@ -1,4 +1,9 @@
-import type { TagContract, ParserContract, EdgeBufferContract, TagTokenContract } from 'edge.js/types'
+import type {
+  TagContract,
+  ParserContract,
+  EdgeBufferContract,
+  TagTokenContract,
+} from 'edge.js/types'
 import string from '@adonisjs/core/helpers/string'
 import { getLivewireContext } from '../../store.js'
 import { store } from '../../store.js'
