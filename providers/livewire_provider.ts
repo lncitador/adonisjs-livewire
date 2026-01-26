@@ -17,6 +17,7 @@ import type Livewire from '../src/livewire.js'
 import { EventBus } from '../src/event_bus.js'
 import { ModelSynth } from '../src/synthesizers/model.js'
 import { ArraySynth } from '../src/synthesizers/array.js'
+import debug from '../src/debug.js'
 
 const currentDirname = dirname(fileURLToPath(import.meta.url))
 
@@ -48,6 +49,7 @@ export default class LivewireProvider {
   constructor(protected app: ApplicationService) {}
 
   async boot() {
+    debug('booting Livewire provider')
     let livewireJs = fs
       .readFileSync(`${currentDirname}/../assets/livewire.js`, 'utf-8')
       .replace('_token', '_csrf')
@@ -76,6 +78,7 @@ export default class LivewireProvider {
      * and the processor for <livewire:.../> syntax
      */
     edge.use(edgePluginLivewire(this.app, livewire, packageJson.version))
+    debug('Livewire provider booted successfully')
 
     router.get('/livewire.css', async ({ response }) => {
       response.type('text/css')
@@ -120,7 +123,7 @@ export default class LivewireProvider {
       component?: string | undefined,
       params: any[] | Record<string, any> | undefined = {}
     ) => {
-      return router.get(pattern, async ({ view, request }) => {
+      return router.get(pattern, async (ctx) => {
         component = component || pattern
 
         component = component.replace(/^\//, '')
@@ -128,16 +131,18 @@ export default class LivewireProvider {
         component = component.replace(/\//g, '.')
 
         let parameters = {
-          ...request.params(),
+          ...ctx.request.params(),
           ...params,
         }
 
-        return await livewire.mount(component, parameters, { layout: { name: config.layout } })
+        return await livewire.mount(ctx, component, parameters, { layout: { name: config.layout } })
       })
     }
 
     router.post('/livewire/update', async (ctx) => {
       let components = ctx.request.input('components', [])
+      debug('processing Livewire update request with %d components', components.length)
+
       let result: any = {
         components: [],
         assets: [],
@@ -146,6 +151,7 @@ export default class LivewireProvider {
       for (const component of components) {
         let snapshot = JSON.parse(component.snapshot)
         let [newSnapshot, effects] = await livewire.update(
+          ctx,
           snapshot,
           component.updates,
           component.calls
