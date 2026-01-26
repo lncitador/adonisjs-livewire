@@ -1,9 +1,11 @@
 import { BaseComponent } from '../../base_component.js'
 import { store } from '../../store.js'
+import { Constructor } from '../../types.js'
 
-export interface HandlesJsEvaluation extends BaseComponent {}
-export class HandlesJsEvaluation {
-  protected js(expression: string) {
-    store(this).push('js', expression)
+export function HandlesJsEvaluation<T extends Constructor<BaseComponent>>(Base: T) {
+  return class extends Base {
+    js(expression: string) {
+      store(this).push('js', expression)
+    }
   }
 }
