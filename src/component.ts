@@ -1,4 +1,3 @@
-import { Mixin } from 'ts-mixer'
 import type { HttpContext } from '@adonisjs/core/http'
 import { BaseComponent } from './base_component.js'
 import { HandlesJsEvaluation } from './features/support_js_valuation/handles_js_evaluation.js'
@@ -7,6 +6,7 @@ import { HandlesDecorators } from './features/support_decorators/handles_decorat
 import { HandlesRedirects } from './features/support_redirects/handles_redirects.js'
 import { HandlesEvents } from './features/support_events/handles_events.js'
 import type { ApplicationService } from '@adonisjs/core/types'
+import { compose } from '@poppinss/utils'
 
 interface ComponentOptions {
   ctx: HttpContext
@@ -15,9 +15,7 @@ interface ComponentOptions {
   name: string
 }
 
-// TODO: Migrate to compose from @poppinss/utils in the future
-// Currently using ts-mixer as compose requires mixin functions, not classes
-export class Component extends Mixin(
+export class Component extends compose(
   BaseComponent,
   HandlesEvents,
   HandlesRedirects,
