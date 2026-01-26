@@ -3,7 +3,7 @@ import ComponentHook from '../../component_hook.js'
 export class SupportDecorators extends ComponentHook {
   async boot(params) {
     for (const decorator of this.component.getDecorators()) {
-      decorator.__boot(this.component)
+      decorator.boot(this.component)
 
       if (typeof decorator['boot'] !== 'function') continue
 

@@ -3,15 +3,13 @@ import { BaseComponent } from '../../base_component.js'
 
 export interface HandlesDecorators extends BaseComponent {}
 export class HandlesDecorators {
-  declare __decorators: Decorator[]
+  #decorators: Decorator[] = []
 
-  getDecorators() {
-    return this.__decorators ?? []
+  getDecorators(): Decorator[] {
+    return this.#decorators
   }
 
-  addDecorator(decorator: Decorator) {
-    if (!this.__decorators) this.__decorators = []
-
-    this.__decorators.push(decorator)
+  addDecorator(decorator: Decorator): void {
+    this.#decorators.push(decorator)
   }
 }
