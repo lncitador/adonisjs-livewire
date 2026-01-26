@@ -1,8 +1,7 @@
 import type { ApplicationService } from '@adonisjs/core/types'
 import ComponentHook from '../../component_hook.js'
-import { store } from '../../store.js'
+import { getLivewireContext, store } from '../../store.js'
 import ComponentContext from '../../component_context.js'
-import { HttpContext } from '@adonisjs/core/http'
 
 export class SupportScriptsAndAssets extends ComponentHook {
   static alreadyRunAssetKeys = []
@@ -40,7 +39,13 @@ export class SupportScriptsAndAssets extends ComponentHook {
 
   async dehydrate(context: ComponentContext) {
     let alreadyRunScriptKeys = store(this.component).get('forwardScriptsToDehydrateMemo') || []
-    let reqId = HttpContext.get()?.request.id()!
+    const livewireCtx = getLivewireContext()
+
+    if (!livewireCtx?.ctx) {
+      throw new Error('Cannot access http context. ctx must be available in livewireContext.')
+    }
+
+    const reqId = livewireCtx.ctx.request.id()
 
     // Add any scripts to the payload that haven't been run yet for this component....
     let scripts = store(this.component).get('scripts') || {}
@@ -66,9 +71,9 @@ export class SupportScriptsAndAssets extends ComponentHook {
       if (!alreadyRunAssetKeys.includes(key)) {
         // These will either get injected into the HTML if it's an initial page load
         // or they will be added to the "assets" key in an ajax payload...
-        let reqRenderedAssets = SupportScriptsAndAssets.renderedAssets.get(reqId) || {}
+        let reqRenderedAssets = SupportScriptsAndAssets.renderedAssets.get(reqId!) || {}
         reqRenderedAssets[key] = asset
-        SupportScriptsAndAssets.renderedAssets.set(reqId, reqRenderedAssets)
+        SupportScriptsAndAssets.renderedAssets.set(reqId!, reqRenderedAssets)
         alreadyRunAssetKeys.push(key)
       }
     }

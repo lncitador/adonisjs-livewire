@@ -3,6 +3,8 @@ import type { ApplicationService } from '@adonisjs/core/types'
 import { livewireTag, livewireStylesTag, livewireScriptsTag, scriptTag, assetsTag } from './tags.js'
 import { processLivewireComponents } from './processor.js'
 import Livewire from '../../livewire.js'
+import debug from '../../debug.js'
+import { getLivewireContext } from '../../store.js'
 
 type LivewireInstance = InstanceType<typeof Livewire>
 
@@ -46,11 +48,25 @@ export const edgePluginLivewire = (
   version: string
 ): PluginFn<undefined> => {
   return (edge) => {
+    debug('registering Livewire Edge.js plugin with version %s', version)
     /**
      * Register the `livewire` global used by the `@livewire` tag
      * This function renders a Livewire component
+     * 
+     * The ctx is always available from livewireContext when rendering Edge templates
+     * during a Livewire request.
      */
-    edge.global('livewire', livewire)
+    edge.global('livewire', {
+      mount: async (name: string, params?: Record<string, any>, options?: any) => {
+        const context = getLivewireContext()
+        
+        if (!context?.ctx) {
+          throw new Error('Cannot access http context. ctx must be available in livewireContext.')
+        }
+        
+        return await livewire.mount(context.ctx, name, params || {}, options || {})
+      }
+    })
 
     /**
      * Register tags
@@ -70,5 +86,6 @@ export const edgePluginLivewire = (
         value.raw = processed
       }
     })
+    debug('Livewire Edge.js plugin registered successfully')
   }
 }
