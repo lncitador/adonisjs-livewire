@@ -1,4 +1,5 @@
 import { AsyncLocalStorage } from 'node:async_hooks'
+import type { HttpContext } from '@adonisjs/core/http'
 import { Component } from './component.js'
 import { BaseComponent } from './base_component.js'
 import ComponentContext from './component_context.js'
@@ -38,6 +39,7 @@ export const livewireContext = new AsyncLocalStorage<{
   dataStore: DataStore
   context: ComponentContext
   features: ComponentHook[]
+  ctx: HttpContext
 }>()
 
 export const getLivewireContext = () => livewireContext.getStore()
