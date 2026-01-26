@@ -17,6 +17,13 @@ import { existsSync } from 'node:fs'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import debug from './debug.js'
+import type {
+  ComponentSnapshot,
+  ComponentCall,
+  ComponentEffects,
+  MountOptions,
+  ComponentHookConstructor,
+} from './types.js'
 
 const isSyntheticTuple = (data) => Array.isArray(data) && data.length === 2 && !!data[1]['s']
 
@@ -25,7 +32,7 @@ export default class Livewire {
   config: Config
   components = new Map<string, typeof Component>()
   checksum: Checksum
-  static FEATURES: any[] = []
+  static FEATURES: ComponentHookConstructor[] = []
   static PROPERTY_SYNTHESIZERS: Array<typeof Synth> = []
 
   constructor(app: ApplicationService, config: Config) {
@@ -36,11 +43,11 @@ export default class Livewire {
     )
   }
 
-  static componentHook(feature: any) {
+  static componentHook(feature: ComponentHookConstructor) {
     this.FEATURES.push(feature)
   }
 
-  componentHook(feature: any) {
+  componentHook(feature: ComponentHookConstructor) {
     Livewire.FEATURES.push(feature)
   }
 
@@ -172,7 +179,7 @@ export default class Livewire {
     return data
   }
 
-  async mount(name: string, params: object = {}, options: { layout?: any; key?: string } = {}) {
+  async mount(name: string, params: Record<string, any> = {}, options: MountOptions = {}) {
     debug('mounting component %s with params %O and options %O', name, params, options)
     let component = await this.new(name)
 
@@ -282,7 +289,7 @@ export default class Livewire {
       }
 
       html = this.insertAttributesIntoHtmlRoot(html, {
-        'wire:snapshot': snapshot,
+        'wire:snapshot': JSON.stringify(snapshot),
         'wire:effects': JSON.stringify(context.effects),
       })
 
@@ -306,13 +313,13 @@ export default class Livewire {
     })
   }
 
-  async fromSnapshot(snapshot: any) {
-    debug('restoring component from snapshot %s', snapshot.name)
+  async fromSnapshot(snapshot: ComponentSnapshot) {
+    debug('restoring component from snapshot %s', snapshot.memo.name)
     this.checksum.verify(snapshot)
 
     const router = await this.app.container.make('router')
-    const path = snapshot['memo']['path']
-    const route = router.find(path)
+    const path = snapshot.memo.path
+    const route = path ? router.find(path) : null
     const ctx = HttpContext.get()
 
     if (route && ctx) {
@@ -336,7 +343,7 @@ export default class Livewire {
 
     await this.hydrateProperties(component, data, context)
 
-    return [component, context] as const
+    return [component, context] as [Component, ComponentContext]
   }
 
   async new(name: string, id: string | null = null) {
@@ -487,7 +494,7 @@ export default class Livewire {
 
   protected async hydrateProperties(
     component: Component,
-    data: { [key: string]: any },
+    data: Record<string, any>,
     context: ComponentContext
   ) {
     for (let key in data) {
@@ -502,21 +509,21 @@ export default class Livewire {
     }
   }
 
-  async update(snapshot: any, updates: any, calls: any) {
-    debug('updating component %s with updates %O and calls %O', snapshot.name, updates, calls)
+  async update(snapshot: ComponentSnapshot, updates: Record<string, any>, calls: ComponentCall[]) {
+    debug('updating component %s with updates %O and calls %O', snapshot.memo.name, updates, calls)
     let dataStore = new DataStore(string.generateRandom(32))
     let [component, context] = await this.fromSnapshot(snapshot)
     let features = Livewire.FEATURES.map((Feature) => {
-      let feature = new Feature()
+      let feature = new (Feature as any)()
       feature.setComponent(component)
       feature.setApp(this.app)
       return feature
     })
 
     return await livewireContext.run({ dataStore, context, features }, async () => {
-      let data = snapshot['data']
-      let memo = snapshot['memo']
-      let path = snapshot['memo']['path'] ?? ''
+      let data = snapshot.data
+      let memo = snapshot.memo
+      let path = snapshot.memo.path ?? ''
 
       const ctx = HttpContext.get()
       if (ctx) {
@@ -543,11 +550,15 @@ export default class Livewire {
 
       let newSnapshot = await this.snapshot(component, context)
 
-      return [newSnapshot, context.effects] as const
+      return [newSnapshot, context.effects] as [ComponentSnapshot, ComponentEffects]
     })
   }
 
-  async callMethods(component: Component, calls: any, context: ComponentContext) {
+  async callMethods(
+    component: Component,
+    calls: ComponentCall[],
+    context: ComponentContext
+  ): Promise<any[]> {
     let returns: any[] = []
 
     for (const call of calls) {
@@ -596,16 +607,16 @@ export default class Livewire {
         }
       } catch (error) {
         console.error(error)
-        if (error.code === 'E_VALIDATION_ERROR') {
+        if ((error as any).code === 'E_VALIDATION_ERROR') {
           //@ts-ignore
           HttpContext.get()?.session?.flashValidationErrors(error)
-        } else if (error.code === 'E_INVALID_CREDENTIALS') {
+        } else if ((error as any).code === 'E_INVALID_CREDENTIALS') {
           //@ts-ignore
           const session = HttpContext.get()?.session
 
           if (session) {
             session.flashExcept(['_csrf', '_method', 'password', 'password_confirmation'])
-            session.flashErrors({ [error.code!]: error.message })
+            session.flashErrors({ [(error as any).code!]: (error as any).message })
           } else {
             throw error
           }
@@ -616,6 +627,7 @@ export default class Livewire {
     }
 
     context.addEffect('returns', returns)
+    return returns
   }
 
   getSynthesizerByKey(key: string, context: ComponentContext, path: string): Synth {
@@ -680,7 +692,7 @@ export default class Livewire {
     }
   }
 
-  async dehydrateProperties(component: any, context: ComponentContext) {
+  async dehydrateProperties(component: Component, context: ComponentContext) {
     const data = {}
     for (let key in component) {
       // Properties starting with # are automatically excluded by runtime
@@ -715,7 +727,10 @@ export default class Livewire {
     // )
   }
 
-  async snapshot(component: any, context: any = null): Promise<any> {
+  async snapshot(
+    component: Component,
+    context: ComponentContext | null = null
+  ): Promise<ComponentSnapshot> {
     debug('creating snapshot for component %s', component.getName())
     context = context ?? new ComponentContext(component)
 
@@ -733,7 +748,7 @@ export default class Livewire {
       context.addEffect('dispatches', s.get('dispatched'))
     }
 
-    let snapshot: any = {
+    let snapshot: ComponentSnapshot = {
       data: data,
       memo: {
         id: component.getId(),
@@ -744,21 +759,22 @@ export default class Livewire {
         children: [],
         scripts: [],
         assets: [],
-        errors: [],
+        errors: {} as Record<string, string[]>,
         locale: 'en',
         ...context.memo,
       },
+      checksum: '',
     }
 
-    snapshot['checksum'] = this.checksum.generate(snapshot)
+    snapshot.checksum = this.checksum.generate(snapshot)
 
     return snapshot
   }
 
   protected async updateProperties(
     component: Component,
-    updates: any,
-    data: any,
+    updates: Record<string, any>,
+    data: Record<string, any>,
     context: ComponentContext
   ) {
     const computedDecorators: Computed[] = component
