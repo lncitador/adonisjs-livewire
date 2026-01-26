@@ -15,4 +15,5 @@ export { EventBus } from './src/event_bus.js'
 export { Synth } from './src/synthesizers/synth.js'
 export { ViewComponent } from './src/view_component.js'
 export * from './src/decorators/index.js'
+// TODO: Remove ts-mixer exports once migrated to compose from @poppinss/utils
 export { mix, Mixin, hasMixin, decorate } from 'ts-mixer'
