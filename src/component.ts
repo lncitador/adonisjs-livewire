@@ -15,6 +15,8 @@ interface ComponentOptions {
   name: string
 }
 
+// TODO: Migrate to compose from @poppinss/utils in the future
+// Currently using ts-mixer as compose requires mixin functions, not classes
 export class Component extends Mixin(
   BaseComponent,
   HandlesEvents,
@@ -26,11 +28,9 @@ export class Component extends Mixin(
   constructor({ ctx, app, id, name }: ComponentOptions) {
     super()
 
-    // @ts-ignore
-    this.__id = id
-    // @ts-ignore
-    this.__name = name
-
+    // Use setters instead of direct property assignment
+    this.id = id
+    this.name = name
     this.app = app
     this.ctx = ctx
   }
