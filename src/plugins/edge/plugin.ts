@@ -3,6 +3,7 @@ import type { ApplicationService } from '@adonisjs/core/types'
 import { livewireTag, livewireStylesTag, livewireScriptsTag, scriptTag, assetsTag } from './tags.js'
 import { processLivewireComponents } from './processor.js'
 import Livewire from '../../livewire.js'
+import debug from '../../debug.js'
 
 type LivewireInstance = InstanceType<typeof Livewire>
 
@@ -46,6 +47,7 @@ export const edgePluginLivewire = (
   version: string
 ): PluginFn<undefined> => {
   return (edge) => {
+    debug('registering Livewire Edge.js plugin with version %s', version)
     /**
      * Register the `livewire` global used by the `@livewire` tag
      * This function renders a Livewire component
@@ -70,5 +72,6 @@ export const edgePluginLivewire = (
         value.raw = processed
       }
     })
+    debug('Livewire Edge.js plugin registered successfully')
   }
 }

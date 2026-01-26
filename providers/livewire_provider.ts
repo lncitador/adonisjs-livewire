@@ -17,6 +17,7 @@ import type Livewire from '../src/livewire.js'
 import { EventBus } from '../src/event_bus.js'
 import { ModelSynth } from '../src/synthesizers/model.js'
 import { ArraySynth } from '../src/synthesizers/array.js'
+import debug from '../src/debug.js'
 
 const currentDirname = dirname(fileURLToPath(import.meta.url))
 
@@ -48,6 +49,7 @@ export default class LivewireProvider {
   constructor(protected app: ApplicationService) {}
 
   async boot() {
+    debug('booting Livewire provider')
     let livewireJs = fs
       .readFileSync(`${currentDirname}/../assets/livewire.js`, 'utf-8')
       .replace('_token', '_csrf')
@@ -76,6 +78,7 @@ export default class LivewireProvider {
      * and the processor for <livewire:.../> syntax
      */
     edge.use(edgePluginLivewire(this.app, livewire, packageJson.version))
+    debug('Livewire provider booted successfully')
 
     router.get('/livewire.css', async ({ response }) => {
       response.type('text/css')
@@ -138,6 +141,8 @@ export default class LivewireProvider {
 
     router.post('/livewire/update', async (ctx) => {
       let components = ctx.request.input('components', [])
+      debug('processing Livewire update request with %d components', components.length)
+
       let result: any = {
         components: [],
         assets: [],

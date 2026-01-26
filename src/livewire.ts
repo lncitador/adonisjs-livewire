@@ -16,6 +16,7 @@ import { Synth } from '../index.js'
 import { existsSync } from 'node:fs'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
+import debug from './debug.js'
 
 const isSyntheticTuple = (data) => Array.isArray(data) && data.length === 2 && !!data[1]['s']
 
@@ -172,6 +173,7 @@ export default class Livewire {
   }
 
   async mount(name: string, params: object = {}, options: { layout?: any; key?: string } = {}) {
+    debug('mounting component %s with params %O and options %O', name, params, options)
     let component = await this.new(name)
 
     let context = new ComponentContext(component, true)
@@ -305,6 +307,7 @@ export default class Livewire {
   }
 
   async fromSnapshot(snapshot: any) {
+    debug('restoring component from snapshot %s', snapshot.name)
     this.checksum.verify(snapshot)
 
     const router = await this.app.container.make('router')
@@ -463,6 +466,7 @@ export default class Livewire {
   }
 
   protected async hydrate(data: any, context: ComponentContext, path: string) {
+    debug('hydrating property at path %s', path)
     if (!isSyntheticTuple(data)) {
       return data
     }
@@ -499,6 +503,7 @@ export default class Livewire {
   }
 
   async update(snapshot: any, updates: any, calls: any) {
+    debug('updating component %s with updates %O and calls %O', snapshot.name, updates, calls)
     let dataStore = new DataStore(string.generateRandom(32))
     let [component, context] = await this.fromSnapshot(snapshot)
     let features = Livewire.FEATURES.map((Feature) => {
@@ -644,6 +649,7 @@ export default class Livewire {
   }
 
   async dehydrate(target: any, context: ComponentContext, path: string) {
+    debug('dehydrating property at path %s', path)
     const isPrimitive = (v: any) =>
       v === null ||
       ['string', 'number', 'boolean', 'undefined'].includes(typeof v) ||
@@ -710,6 +716,7 @@ export default class Livewire {
   }
 
   async snapshot(component: any, context: any = null): Promise<any> {
+    debug('creating snapshot for component %s', component.getName())
     context = context ?? new ComponentContext(component)
 
     let data = await this.dehydrateProperties(component, context)
@@ -833,6 +840,7 @@ export default class Livewire {
   }
 
   async render(component: Component, defaultValue?: string) {
+    debug('rendering component %s', component.getName())
     // let isRedirect = (store(component).get('redirect') ?? []).length > 0
     let skipRenderHtml = store(component).get('skipRender') ?? false
     skipRenderHtml = Array.isArray(skipRenderHtml) ? skipRenderHtml[0] : skipRenderHtml
