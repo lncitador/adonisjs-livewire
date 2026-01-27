@@ -18,5 +18,5 @@
  * ```
  */
 export function isSyntheticTuple(data: any): boolean {
-  return Array.isArray(data) && data.length === 2 && !!data[1]?.['s']
+  return Array.isArray(data) && data.length === 2 && data[1]?.['s'] !== undefined
 }
