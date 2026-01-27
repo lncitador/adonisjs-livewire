@@ -5,6 +5,7 @@ import { HandlesPageComponents } from './features/support_page_components/handle
 import { HandlesDecorators } from './features/support_decorators/handles_decorators.js'
 import { HandlesRedirects } from './features/support_redirects/handles_redirects.js'
 import { HandlesEvents } from './features/support_events/handles_events.js'
+import { HandlesValidation } from './features/support_validation/handles_validation.js'
 import type { ApplicationService } from '@adonisjs/core/types'
 import { compose } from '@poppinss/utils'
 
@@ -21,7 +22,8 @@ export class Component extends compose(
   HandlesRedirects,
   HandlesDecorators,
   HandlesPageComponents,
-  HandlesJsEvaluation
+  HandlesJsEvaluation,
+  HandlesValidation
 ) {
   constructor({ ctx, app, id, name }: ComponentOptions) {
     super()

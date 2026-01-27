@@ -11,6 +11,7 @@ import { SupportEvents } from '../src/features/support_events/support_events.js'
 import { SupportJsEvaluation } from '../src/features/support_js_valuation/support_js_evaluation.js'
 import { SupportRedirects } from '../src/features/support_redirects/support_redirects.js'
 import { SupportScriptsAndAssets } from '../src/features/support_scripts_and_assets/support_scripts_and_assets.js'
+import { SupportValidation } from '../src/features/support_validation/support_validation.js'
 import { SupportAutoInjectedAssets } from '../src/features/support_auto_injected_assets/support_auto_injected_assets.js'
 import { Config, defaultConfig } from '../src/define_config.js'
 import type Livewire from '../src/livewire.js'
@@ -189,6 +190,7 @@ export default class LivewireProvider {
       SupportScriptsAndAssets,
       SupportAutoInjectedAssets,
       SupportLazyLoading,
+      SupportValidation,
     ]
 
     for (const feature of FEATURES) {
