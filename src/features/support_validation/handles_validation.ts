@@ -1,6 +1,7 @@
 import type { Constructor } from '../../types.js'
 import type { BaseComponent } from '../../base_component.js'
 import { store } from '../../store.js'
+import type { InferInput, Infer, ConstructableSchema } from '@vinejs/vine/types'
 
 /**
  * Error bag for storing validation errors
@@ -31,6 +32,107 @@ export type ErrorBag = Record<string, string[]>
  */
 export function HandlesValidation<T extends Constructor<BaseComponent>>(Base: T) {
   return class extends Base {
+    /**
+     * Extract component data for validation
+     * Similar to Livewire.generateComponentData but as instance method
+     */
+    #getComponentData = (): Record<string, any> => {
+      const data: Record<string, any> = {}
+      const component = this as any
+
+      // Get own properties (excluding private fields and methods)
+      for (const key of Object.keys(component)) {
+        if (key.startsWith('_') || key.startsWith('#')) continue
+        if (['app', 'ctx', 'id', 'name', 'viewPath', 'view'].includes(key)) continue
+        if (typeof component[key] === 'function') continue
+
+        data[key] = component[key]
+      }
+
+      // Get properties from prototype (excluding methods)
+      let prototype = Object.getPrototypeOf(component)
+      while (prototype && prototype !== Object.prototype) {
+        const props = Object.getOwnPropertyNames(prototype)
+        for (const prop of props) {
+          if (prop === 'constructor') continue
+          if (typeof component[prop] === 'function') continue
+          if (prop.startsWith('_') || prop.startsWith('#')) continue
+
+          const descriptor = Object.getOwnPropertyDescriptor(prototype, prop)
+          if (descriptor && (descriptor.get || descriptor.set)) {
+            try {
+              data[prop] = component[prop]
+            } catch {
+              // Skip getters that throw
+            }
+          } else if (!(prop in data)) {
+            data[prop] = component[prop]
+          }
+        }
+        prototype = Object.getPrototypeOf(prototype)
+      }
+
+      return data
+    }
+
+    /**
+     * Extract validation errors from Vine.js error object
+     * Follows the same pattern as Form.validate() in adonis project
+     */
+    #extractVineErrors = (error: any): ErrorBag => {
+      const errorMessages: ErrorBag = {}
+
+      // Vine.js errors typically have an 'issues' array
+      if (error.issues && Array.isArray(error.issues)) {
+        for (const issue of error.issues) {
+          const field = issue.path?.join('.') || 'unknown'
+          const message = typeof issue.message === 'string' ? issue.message : String(issue.message)
+          if (!errorMessages[field]) {
+            errorMessages[field] = []
+          }
+          errorMessages[field].push(message)
+        }
+      } else if (error.messages) {
+        if (Array.isArray(error.messages)) {
+          for (const msg of error.messages) {
+            if (msg && typeof msg === 'object') {
+              if (msg.path && Array.isArray(msg.path)) {
+                const field = msg.path.join('.') || 'unknown'
+                const message =
+                  typeof msg.message === 'string' ? msg.message : String(msg.message || '')
+                if (!errorMessages[field]) {
+                  errorMessages[field] = []
+                }
+                errorMessages[field].push(message)
+              } else {
+                const field = msg.field || msg.name || msg.path || 'unknown'
+                const message =
+                  typeof msg.message === 'string'
+                    ? msg.message
+                    : typeof msg.error === 'string'
+                      ? msg.error
+                      : String(msg || '')
+                if (!errorMessages[field]) {
+                  errorMessages[field] = []
+                }
+                errorMessages[field].push(message)
+              }
+            }
+          }
+        } else {
+          // Fallback to messages object
+          for (const [field, messageOrArray] of Object.entries(error.messages)) {
+            if (Array.isArray(messageOrArray)) {
+              errorMessages[field] = messageOrArray.map(String)
+            } else if (messageOrArray) {
+              errorMessages[field] = [String(messageOrArray)]
+            }
+          }
+        }
+      }
+
+      return errorMessages
+    }
     /**
      * Get the error bag for this component
      * Returns an empty error bag if none exists
@@ -182,6 +284,49 @@ export function HandlesValidation<T extends Constructor<BaseComponent>>(Base: T)
     getFirstError(field: string): string | undefined {
       const errors = this.getError(field)
       return errors.length > 0 ? errors[0] : undefined
+    }
+
+    /**
+     * Validate component data using a Vine.js schema
+     *
+     * @param schema - Vine.js validation schema (required)
+     * @param data - Optional data to validate. If not provided, uses component properties
+     * @returns Promise resolving to validated data with proper type inference
+     * @throws Validation error if validation fails (errors are automatically set in error bag)
+     *
+     * @example
+     * ```typescript
+     * import vine from '@vinejs/vine'
+     *
+     * const schema = vine.object({
+     *   name: vine.string().minLength(3),
+     *   email: vine.string().email()
+     * })
+     *
+     * const validated = await this.validateUsing(schema)
+     * // validated is typed as { name: string, email: string }
+     * ```
+     */
+    async validateUsing<TSchema extends ConstructableSchema<any, any, any>>(
+      schema: TSchema,
+      data?: InferInput<TSchema>
+    ): Promise<Infer<TSchema>> {
+      // Import vine dynamically
+      const { default: vine } = await import('@vinejs/vine')
+
+      // Extract data from component if not provided
+      const dataToValidate = data ?? this.#getComponentData()
+
+      try {
+        const validated = await vine.create(schema).validate(dataToValidate)
+        this.resetErrorBag()
+        return validated
+      } catch (error: any) {
+        // Convert Vine.js errors to error bag format
+        const errorMessages = this.#extractVineErrors(error)
+        this.setErrorBag(errorMessages)
+        throw error
+      }
     }
   }
 }
