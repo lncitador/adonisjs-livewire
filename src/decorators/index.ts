@@ -8,6 +8,8 @@ import Layout from '../features/support_page_components/layout.js'
 import Title from '../features/support_page_components/title.js'
 import Url from '../features/support_query_string/url.js'
 import Renderless from '../features/support_renderless/renderless.js'
+import Validator from '../features/support_validation/validator.js'
+import type { ConstructableSchema } from '@vinejs/vine/types'
 
 export function title(value: string) {
   return function (constructor: typeof Component) {
@@ -96,4 +98,33 @@ export function renderless() {
   return function (target: Component, propertyKey: string) {
     target.addDecorator(new Renderless())
   }
+}
+
+/**
+ * Validator decorator for properties
+ *
+ * Forces the property to be typed as HasValidate<T> where T is inferred from the schema.
+ * The schema factory function is called when building the validation schema.
+ *
+ * @param schemaFactory - Function that returns a Vine.js schema for this property
+ * @param options - Optional configuration (onUpdate: whether to validate on property update)
+ *
+ * @example
+ * ```typescript
+ * class MyComponent extends Component {
+ *   @validator(() => vine.string().minLength(3))
+ *   declare name: HasValidate<string>
+ *
+ *   @validator(() => vine.string().email(), { onUpdate: false })
+ *   declare email: HasValidate<string>
+ * }
+ * ```
+ */
+export function validator<T extends () => ConstructableSchema<any, any, any>>(
+  schemaFactory: T,
+  options?: { onUpdate?: boolean }
+) {
+  return function (target: Component, propertyKey: string) {
+    target.addDecorator(new Validator(propertyKey, schemaFactory, options?.onUpdate ?? true))
+  } as (target: Component, propertyKey: string) => void
 }
