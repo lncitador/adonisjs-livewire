@@ -2,7 +2,7 @@ import type { Constructor } from '../../types.js'
 import type { BaseComponent } from '../../base_component.js'
 import { store } from '../../store.js'
 import type { InferInput, Infer, ConstructableSchema } from '@vinejs/vine/types'
-import type { ValidatedProperties } from './types.js'
+import type { ValidatedProperties, InferValidationReturnType } from './types.js'
 
 /**
  * Error bag for storing validation errors
@@ -41,33 +41,50 @@ export function HandlesValidation<T extends Constructor<BaseComponent>>(Base: T)
       const data: Record<string, any> = {}
       const component = this as any
 
+      // Properties to exclude from validation (internal/system properties)
+      const excludedProps = ['app', 'ctx', 'viewPath', 'view', 'viewData']
+
       // Get own properties (excluding private fields and methods)
       for (const key of Object.keys(component)) {
         if (key.startsWith('_') || key.startsWith('#')) continue
-        if (['app', 'ctx', 'id', 'name', 'viewPath', 'view'].includes(key)) continue
+        if (excludedProps.includes(key)) continue
         if (typeof component[key] === 'function') continue
 
-        data[key] = component[key]
+        try {
+          data[key] = component[key]
+        } catch {
+          // Skip properties that throw errors when accessed
+          continue
+        }
       }
 
       // Get properties from prototype (excluding methods)
+      // This includes getters like id and name if they exist
       let prototype = Object.getPrototypeOf(component)
       while (prototype && prototype !== Object.prototype) {
         const props = Object.getOwnPropertyNames(prototype)
         for (const prop of props) {
           if (prop === 'constructor') continue
+          if (excludedProps.includes(prop)) continue
           if (typeof component[prop] === 'function') continue
           if (prop.startsWith('_') || prop.startsWith('#')) continue
+          if (prop in data) continue // Skip if already added from own properties
 
           const descriptor = Object.getOwnPropertyDescriptor(prototype, prop)
           if (descriptor && (descriptor.get || descriptor.set)) {
+            // Handle getters/setters (like id, name if they exist as getters)
             try {
               data[prop] = component[prop]
             } catch {
-              // Skip getters that throw
+              // Skip getters that throw (like uninitialized view)
             }
-          } else if (!(prop in data)) {
-            data[prop] = component[prop]
+          } else {
+            // Regular properties
+            try {
+              data[prop] = component[prop]
+            } catch {
+              // Skip properties that throw errors
+            }
           }
         }
         prototype = Object.getPrototypeOf(prototype)
@@ -311,14 +328,33 @@ export function HandlesValidation<T extends Constructor<BaseComponent>>(Base: T)
      * Validate component data using schema from rules() method or @validator decorators
      *
      * This method automatically finds the validation schema from:
-     * 1. The rules() method if defined
+     * 1. The rules() method if defined (type inference from schema)
      * 2. @validator decorators on properties (builds schema from HasValidate properties)
      *
-     * The return type is inferred from properties marked with HasValidate<T>
+     * The return type is inferred from:
+     * - rules() method return type if defined
+     * - ValidatedProperties<this> if using @validator decorators
      *
      * @param data - Optional data to validate. If not provided, uses component properties
      * @returns Promise resolving to validated data with inferred types
      * @throws Error if no schema found (no rules() method and no @validator decorators)
+     *
+     * @example
+     * ```typescript
+     * class MyComponent extends Component {
+     *   rules() {
+     *     return vine.object({
+     *       name: vine.string().minLength(3),
+     *       email: vine.string().email()
+     *     })
+     *   }
+     *
+     *   async submit() {
+     *     // validated is typed as { name: string, email: string } from rules()
+     *     const validated = await this.validate()
+     *   }
+     * }
+     * ```
      *
      * @example
      * ```typescript
@@ -330,13 +366,13 @@ export function HandlesValidation<T extends Constructor<BaseComponent>>(Base: T)
      *   declare email: HasValidate<string>
      *
      *   async submit() {
-     *     // validated is typed as { name: string, email: string }
+     *     // validated is typed as { name: string, email: string } from ValidatedProperties
      *     const validated = await this.validate()
      *   }
      * }
      * ```
      */
-    async validate(data?: Record<string, any>): Promise<ValidatedProperties<this>> {
+    async validate(data?: Record<string, any>): Promise<InferValidationReturnType<this>> {
       // Try to get schema from rules() method first
       let schema: ConstructableSchema<any, any, any> | undefined
       if (typeof (this as any).rules === 'function') {
@@ -355,8 +391,8 @@ export function HandlesValidation<T extends Constructor<BaseComponent>>(Base: T)
       }
 
       // Use validateUsing with the found schema
-      // The return type will be inferred from ValidatedProperties<this>
-      return this.validateUsing(schema, data) as Promise<ValidatedProperties<this>>
+      // The return type will be inferred from rules() if available, otherwise ValidatedProperties<this>
+      return this.validateUsing(schema, data) as Promise<InferValidationReturnType<this>>
     }
 
     /**
