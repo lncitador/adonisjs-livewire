@@ -2,6 +2,7 @@ import type { ApplicationService } from '@adonisjs/core/types'
 import type { Component } from './component.js'
 import ComponentContext from './component_context.js'
 import { store } from './store.js'
+import { BaseComponent } from './base_component.js'
 
 /**
  * Base class for all Livewire features (hooks)
@@ -11,7 +12,7 @@ export default abstract class ComponentHook {
   /**
    * The component instance this hook is attached to
    */
-  declare component: Component
+  declare component: BaseComponent
 
   /**
    * The application service instance
@@ -20,7 +21,7 @@ export default abstract class ComponentHook {
   /**
    * Set the component instance
    */
-  setComponent(component: Component): void {
+  setComponent(component: BaseComponent): void {
     this.component = component
   }
 
