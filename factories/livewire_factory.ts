@@ -2,7 +2,7 @@ import { type HttpContext } from '@adonisjs/core/http'
 import { HttpContextFactory } from '@adonisjs/core/factories/http'
 import { type ApplicationService } from '@adonisjs/core/types'
 
-import { defineConfig, type Config } from '../src/define_config.js'
+import { defineConfig, type Config, type PartialConfig } from '../src/define_config.js'
 import Livewire from '../src/livewire.js'
 import { LivewireHeaders } from '../src/headers.js'
 
@@ -67,7 +67,7 @@ export class LivewireFactory {
    */
   merge(
     parameters: Omit<Partial<FactoryParameters>, 'config'> & {
-      config?: Partial<Config>
+      config?: PartialConfig
     }
   ) {
     if (parameters.ctx) {
