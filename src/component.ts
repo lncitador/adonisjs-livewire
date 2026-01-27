@@ -16,7 +16,7 @@ interface ComponentOptions {
   name: string
 }
 
-export class Component extends compose(
+export abstract class Component extends compose(
   BaseComponent,
   HandlesEvents,
   HandlesRedirects,
@@ -29,8 +29,8 @@ export class Component extends compose(
     super()
 
     // Use setters instead of direct property assignment
-    this.id = id
-    this.name = name
+    this.__id = id
+    this.__name = name
     this.app = app
     this.ctx = ctx
   }

@@ -17,19 +17,19 @@ export class BaseComponent {
   declare ctx: HttpContext
 
   // Getters & Setters for controlled access
-  get id(): string {
+  get __id(): string {
     return this.#id
   }
 
-  set id(value: string) {
+  set __id(value: string) {
     this.#id = value
   }
 
-  get name(): string {
+  get __name(): string {
     return this.#name
   }
 
-  set name(value: string) {
+  set __name(value: string) {
     this.#name = value
   }
 
@@ -84,15 +84,15 @@ export class BaseComponent {
 
   // Compatibility methods (maintained for backward compatibility)
   setId(id: string) {
-    this.id = id
+    this.__id = id
   }
 
   getId() {
-    return this.id
+    return this.__id
   }
 
   setName(name: string) {
-    this.name = name
+    this.__name = name
   }
 
   setViewPath(view: string) {
@@ -100,7 +100,7 @@ export class BaseComponent {
   }
 
   getName() {
-    return this.name
+    return this.__name
   }
 
   async render(): Promise<string> {
