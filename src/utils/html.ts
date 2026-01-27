@@ -26,6 +26,33 @@ export function htmlspecialchars(text: string): string {
 }
 
 /**
+ * Inverte entidades HTML de volta para caracteres normais
+ *
+ * Converte entidades HTML de volta para seus caracteres originais,
+ * fazendo o processo inverso de htmlspecialchars.
+ *
+ * @param text - O texto com entidades HTML a ser convertido
+ * @returns String com caracteres normais
+ *
+ * @example
+ * ```ts
+ * inverter('&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;')
+ * // Returns: '<script>alert("xss")</script>'
+ * ```
+ */
+export function inverter(text: string): string {
+  const map: { [key: string]: string } = {
+    '&amp;': '&',
+    '&lt;': '<',
+    '&gt;': '>',
+    '&quot;': '"',
+    '&#039;': "'",
+  }
+
+  return text.replace(/&(amp|lt|gt|quot|#039);/g, (m) => map[m] || m)
+}
+
+/**
  * Escape a value for use in HTML attributes
  *
  * Handles strings, numbers, and objects (which are JSON stringified).

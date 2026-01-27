@@ -1,4 +1,4 @@
-import CryptoJS from 'crypto-js'
+import { createHmac } from 'node:crypto'
 
 class CorruptComponentPayloadException extends Error {
   constructor() {
@@ -22,6 +22,6 @@ export class Checksum {
   }
 
   generate(snapshot: any) {
-    return CryptoJS.HmacSHA256(JSON.stringify(snapshot), this.key).toString()
+    return createHmac('sha256', this.key).update(JSON.stringify(snapshot)).digest('hex')
   }
 }

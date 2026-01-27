@@ -36,7 +36,10 @@ export function processLivewireComponents(raw: string): string {
         for (const matchProp of matchesProps) {
           let [m, prefix, key, value] =
             matchProp.match(/(@|:|wire:)?([a-zA-Z0-9\-:.]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/) || []
-          if (prefix === ':' && key !== 'is' && key !== 'component') {
+          // Handle :is and :component as Edge bindings (treat value as variable, not string)
+          if (prefix === ':' && (key === 'is' || key === 'component')) {
+            attributes[key] = value // Store variable name directly, will be used as Edge expression
+          } else if (prefix === ':' && key !== 'is' && key !== 'component') {
             attributes[key] = `_____${value}_____`
           } else if (prefix === 'wire:' && key === 'key') {
             options.key = `_____${value}_____`
@@ -75,6 +78,8 @@ export function processLivewireComponents(raw: string): string {
       component = attributes['component'] ?? attributes['is']
       delete attributes['component']
       delete attributes['is']
+      // If component is still a string (from component="..." or :is="..."), keep it as variable
+      // Don't add quotes - it should be treated as Edge variable/expression
     } else {
       component = `'${component}'`
     }
