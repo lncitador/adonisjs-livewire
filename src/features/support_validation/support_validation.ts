@@ -121,6 +121,88 @@ export class SupportValidation extends ComponentHook {
   }
 
   /**
+   * Handle property update - validate property if it has @validator decorator with onUpdate: true
+   */
+  async update(
+    propertyName: string,
+    _fullPath: string,
+    _newValue: any
+  ): Promise<Function | undefined> {
+    const component = this.component as any
+
+    // Get all decorators
+    const decorators = component.getDecorators?.() || []
+    const validatorDecorator = decorators.find(
+      (d: any) => d.constructor.name === 'Validator' && d.propertyName === propertyName
+    )
+
+    // If property has @validator decorator and onUpdate is true, validate it
+    if (validatorDecorator && validatorDecorator.onUpdate) {
+      // Validate only this property
+      await this.#validateProperty(component, propertyName, validatorDecorator)
+    }
+
+    // Return undefined (no callback needed)
+    return undefined
+  }
+
+  /**
+   * Validate a single property using its validator decorator
+   */
+  async #validateProperty(
+    component: any,
+    propertyName: string,
+    validatorDecorator: any
+  ): Promise<void> {
+    try {
+      const { default: vine } = await import('@vinejs/vine')
+
+      // Get the schema factory and create field schema
+      const fieldSchema = validatorDecorator.schemaFactory()
+
+      // Get the property value
+      const propertyValue = component[propertyName]
+
+      // Create a partial schema with just this field
+      const partialSchema = vine.object({
+        [propertyName]: fieldSchema,
+      })
+
+      // Validate only this field
+      await vine.create(partialSchema).validate({ [propertyName]: propertyValue })
+
+      // Clear error for this field if validation passes
+      if (typeof component.resetErrorBag === 'function') {
+        component.resetErrorBag(propertyName)
+      }
+    } catch (error: any) {
+      // Extract errors for this field only
+      const errorMessages: Record<string, string[]> = {}
+
+      if (error.issues && Array.isArray(error.issues)) {
+        for (const issue of error.issues) {
+          const field = issue.path?.join('.') || propertyName
+          if (field === propertyName || field.startsWith(`${propertyName}.`)) {
+            const message =
+              typeof issue.message === 'string' ? issue.message : String(issue.message)
+            if (!errorMessages[field]) {
+              errorMessages[field] = []
+            }
+            errorMessages[field].push(message)
+          }
+        }
+      }
+
+      // Update error bag only for this property
+      if (typeof component.setErrorBag === 'function') {
+        const currentErrors = component.getErrorBag?.() || {}
+        const updatedErrors = { ...currentErrors, ...errorMessages }
+        component.setErrorBag(updatedErrors)
+      }
+    }
+  }
+
+  /**
    * Check if a component has a property with the given name
    */
   private hasComponentProperty(component: any, field: string): boolean {

@@ -2,6 +2,7 @@ import type { Constructor } from '../../types.js'
 import type { BaseComponent } from '../../base_component.js'
 import { store } from '../../store.js'
 import type { InferInput, Infer, ConstructableSchema } from '@vinejs/vine/types'
+import type { ValidatedProperties } from './types.js'
 
 /**
  * Error bag for storing validation errors
@@ -284,6 +285,111 @@ export function HandlesValidation<T extends Constructor<BaseComponent>>(Base: T)
     getFirstError(field: string): string | undefined {
       const errors = this.getError(field)
       return errors.length > 0 ? errors[0] : undefined
+    }
+
+    /**
+     * Optional method to define validation rules as a Vine.js schema
+     *
+     * If defined, this method should return a ConstructableSchema that will be used
+     * for validation when validate() is called.
+     *
+     * @returns Vine.js schema object or undefined
+     *
+     * @example
+     * ```typescript
+     * rules?() {
+     *   return vine.object({
+     *     name: vine.string().minLength(3),
+     *     email: vine.string().email()
+     *   })
+     * }
+     * ```
+     */
+    rules?(): ConstructableSchema<any, any, any> | undefined
+
+    /**
+     * Validate component data using schema from rules() method or @validator decorators
+     *
+     * This method automatically finds the validation schema from:
+     * 1. The rules() method if defined
+     * 2. @validator decorators on properties (builds schema from HasValidate properties)
+     *
+     * The return type is inferred from properties marked with HasValidate<T>
+     *
+     * @param data - Optional data to validate. If not provided, uses component properties
+     * @returns Promise resolving to validated data with inferred types
+     * @throws Error if no schema found (no rules() method and no @validator decorators)
+     *
+     * @example
+     * ```typescript
+     * class MyComponent extends Component {
+     *   @validator(() => vine.string().minLength(3))
+     *   declare name: HasValidate<string>
+     *
+     *   @validator(() => vine.string().email())
+     *   declare email: HasValidate<string>
+     *
+     *   async submit() {
+     *     // validated is typed as { name: string, email: string }
+     *     const validated = await this.validate()
+     *   }
+     * }
+     * ```
+     */
+    async validate(data?: Record<string, any>): Promise<ValidatedProperties<this>> {
+      // Try to get schema from rules() method first
+      let schema: ConstructableSchema<any, any, any> | undefined
+      if (typeof (this as any).rules === 'function') {
+        schema = (this as any).rules()
+      }
+
+      // If no schema from rules(), try to build from @validator decorators
+      if (!schema) {
+        schema = await this.#buildSchemaFromValidators()
+      }
+
+      if (!schema) {
+        throw new Error(
+          'No validation schema found. Either implement a rules() method or use @validator decorators on properties.'
+        )
+      }
+
+      // Use validateUsing with the found schema
+      // The return type will be inferred from ValidatedProperties<this>
+      return this.validateUsing(schema, data) as Promise<ValidatedProperties<this>>
+    }
+
+    /**
+     * Build Vine.js schema from @validator decorators on properties
+     */
+    #buildSchemaFromValidators = async (): Promise<
+      ConstructableSchema<any, any, any> | undefined
+    > => {
+      const { default: vine } = await import('@vinejs/vine')
+      const component = this as any
+      const decorators = component.getDecorators?.() || []
+
+      const validatorDecorators = decorators.filter((d: any) => d.constructor.name === 'Validator')
+
+      if (validatorDecorators.length === 0) {
+        return undefined
+      }
+
+      // Build schema object from decorators
+      const schemaFields: Record<string, any> = {}
+      for (const decorator of validatorDecorators) {
+        if (decorator.schemaFactory) {
+          // Call the schema factory function to get the field schema
+          const fieldSchema = decorator.schemaFactory()
+          schemaFields[decorator.propertyName] = fieldSchema
+        }
+      }
+
+      if (Object.keys(schemaFields).length === 0) {
+        return undefined
+      }
+
+      return vine.object(schemaFields)
     }
 
     /**
