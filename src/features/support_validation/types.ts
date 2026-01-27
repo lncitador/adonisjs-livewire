@@ -1,3 +1,5 @@
+import type { Infer, ConstructableSchema } from '@vinejs/vine/types'
+
 /**
  * Opaque type for validated properties
  * Similar to Lucid's HasMany, HasOne, etc.
@@ -40,3 +42,15 @@ export type ValidatedProperties<Component> = {
     ? T
     : never
 }
+
+/**
+ * Infer validation return type from component
+ * Prioritizes rules() method return type, falls back to ValidatedProperties
+ */
+export type InferValidationReturnType<Component> = Component extends {
+  rules(): infer TSchema
+}
+  ? TSchema extends ConstructableSchema<any, any, any>
+    ? Infer<TSchema>
+    : ValidatedProperties<Component>
+  : ValidatedProperties<Component>
