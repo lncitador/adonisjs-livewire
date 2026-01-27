@@ -70,11 +70,16 @@ export function inverter(text: string): string {
  * ```
  */
 export function escapeStringForHtml(subject: any): string {
-  if (typeof subject === 'string' || typeof subject === 'number') {
-    return htmlspecialchars(subject as any)
+  if (typeof subject === 'string') {
+    return htmlspecialchars(subject)
   }
 
-  return htmlspecialchars(JSON.stringify(subject))
+  if (typeof subject === 'number') {
+    return String(subject)
+  }
+
+  // For objects/arrays, just stringify (quotes will be escaped when used in HTML attributes)
+  return JSON.stringify(subject)
 }
 
 /**
@@ -94,7 +99,14 @@ export function escapeStringForHtml(subject: any): string {
  */
 export function stringifyHtmlAttributes(attributes: { [key: string]: any }): string {
   return Object.entries(attributes)
-    .map(([key, value]) => `${key}="${escapeStringForHtml(value)}"`)
+    .map(([key, value]) => {
+      let escapedValue = escapeStringForHtml(value)
+      // If value is an object/array (JSON string), escape quotes for HTML attributes
+      if (typeof value === 'object' && value !== null) {
+        escapedValue = escapedValue.replace(/"/g, '&quot;')
+      }
+      return `${key}="${escapedValue}"`
+    })
     .join(' ')
 }
 
