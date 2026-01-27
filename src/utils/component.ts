@@ -34,7 +34,7 @@ export function extractComponentParts(content: string): {
   const serverCode = serverCodeMatch ? serverCodeMatch[1].trim() : ''
 
   const templateMatch = content.match(templatePattern)
-  const template = templateMatch ? templateMatch[1].trim() : ''
+  const template = templateMatch ? templateMatch[1].trim() : content.trim()
 
   return {
     serverCode,
