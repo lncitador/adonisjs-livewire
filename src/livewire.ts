@@ -23,6 +23,7 @@ import type {
   ComponentEffects,
   MountOptions,
   ComponentHookConstructor,
+  ComponentConstructor,
 } from './types.js'
 import { isSyntheticTuple } from './utils/synthetic.js'
 import { insertAttributesIntoHtmlRoot as insertAttributesIntoHtml } from './utils/html.js'
@@ -31,7 +32,7 @@ import { extractComponentParts } from './utils/component.js'
 export default class Livewire {
   app: ApplicationService
   config: Config
-  components = new Map<string, typeof Component>()
+  components = new Map<string, ComponentConstructor>()
   checksum: Checksum
   static FEATURES: ComponentHookConstructor[] = []
   static PROPERTY_SYNTHESIZERS: Array<typeof Synth> = []
@@ -39,9 +40,10 @@ export default class Livewire {
   constructor(app: ApplicationService, config: Config) {
     this.app = app
     this.config = config
-    this.checksum = new Checksum(
-      this.app.config.get<Secret<string>>('app.appKey', 'appKey').release()
-    )
+
+    const secret = new Secret(this.app.config.get<string>('app.appKey', 'appKey'))
+
+    this.checksum = new Checksum(secret.release())
   }
 
   static componentHook(feature: ComponentHookConstructor) {
@@ -348,7 +350,7 @@ export default class Livewire {
   }
 
   async new(ctx: HttpContext, name: string, id: string | null = null) {
-    let LivewireComponent: typeof Component
+    let LivewireComponent: ComponentConstructor
 
     if (this.components.has(name)) {
       LivewireComponent = this.components.get(name)!
@@ -406,7 +408,7 @@ export default class Livewire {
         }
       }
 
-      //@ts-ignore
+      //@ts-ignoreß
       if (!LivewireComponent) {
         throw new Error(`Livewire component not found for ${name}`)
       }
@@ -913,7 +915,7 @@ export default class Livewire {
     return html
   }
 
-  component(name: string, component: typeof Component) {
+  component(name: string, component: ComponentConstructor) {
     return this.components.set(name, component)
   }
 
@@ -924,7 +926,7 @@ export default class Livewire {
   async buildSingleFileComponent(
     name: string,
     livewireViewPath: string
-  ): Promise<typeof Component | undefined> {
+  ): Promise<ComponentConstructor | undefined> {
     const content = await readFile(fileURLToPath(livewireViewPath), 'utf-8')
 
     const { serverCode, template } = extractComponentParts(content)
@@ -948,7 +950,7 @@ export default class Livewire {
       return template
     }
 
-    return component as typeof Component
+    return component
   }
 }
 
