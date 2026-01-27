@@ -27,11 +27,13 @@ export class DataStore {
   }
 
   get(component: Component | BaseComponent, key: string) {
-    return this.lookup.get(component)?.[key] || []
+    const componentData = this.lookup.get(component)
+    if (!componentData) return []
+    return key in componentData ? componentData[key] : []
   }
 
   has(component: Component | BaseComponent, key: string) {
-    return (this.lookup.has(component) && this.lookup.get(component)?.[key]) || false
+    return !!(this.lookup.has(component) && this.lookup.get(component)?.[key] !== undefined)
   }
 }
 
