@@ -11,6 +11,21 @@ export const defaultConfig = {
 
 export type Config = typeof defaultConfig
 
-export function defineConfig(config: Partial<Config>): Config {
-  return { ...defaultConfig, ...config }
+export type PartialConfig = {
+  class_namespace?: string
+  layout?: string
+  injectAssets?: boolean
+  renderOnRedirect?: boolean
+  navigate?: Partial<Config['navigate']>
+}
+
+export function defineConfig(config: PartialConfig): Config {
+  return {
+    ...defaultConfig,
+    ...config,
+    navigate: {
+      ...defaultConfig.navigate,
+      ...(config.navigate || {}),
+    },
+  }
 }
