@@ -21,11 +21,11 @@ class ValidationTestComponent extends Component {
 
 test.group('Support Validation Feature', () => {
   test('should set error bag', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new ValidationTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new ValidationTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component)
@@ -46,11 +46,11 @@ test.group('Support Validation Feature', () => {
   })
 
   test('should set error bag with single string messages', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new ValidationTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new ValidationTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component)
@@ -71,11 +71,11 @@ test.group('Support Validation Feature', () => {
   })
 
   test('should get empty error bag when no errors', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new ValidationTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new ValidationTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component)
@@ -90,11 +90,11 @@ test.group('Support Validation Feature', () => {
   })
 
   test('should add error to field', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new ValidationTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new ValidationTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component)
@@ -112,11 +112,11 @@ test.group('Support Validation Feature', () => {
   })
 
   test('should reset all errors', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new ValidationTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new ValidationTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component)
@@ -138,11 +138,11 @@ test.group('Support Validation Feature', () => {
   })
 
   test('should reset specific field errors', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new ValidationTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new ValidationTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component)
@@ -165,11 +165,11 @@ test.group('Support Validation Feature', () => {
   })
 
   test('should reset multiple field errors', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new ValidationTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new ValidationTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component)
@@ -194,11 +194,11 @@ test.group('Support Validation Feature', () => {
   })
 
   test('should check if field has error', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new ValidationTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new ValidationTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component)
@@ -215,11 +215,11 @@ test.group('Support Validation Feature', () => {
   })
 
   test('should get errors for field', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new ValidationTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new ValidationTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component)
@@ -237,11 +237,11 @@ test.group('Support Validation Feature', () => {
   })
 
   test('should get first error for field', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new ValidationTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new ValidationTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component)
@@ -259,11 +259,11 @@ test.group('Support Validation Feature', () => {
   })
 
   test('should return undefined for first error when no errors', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new ValidationTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new ValidationTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component)
@@ -278,11 +278,11 @@ test.group('Support Validation Feature', () => {
   })
 
   test('should validate using Vine.js schema', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new ValidationTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new ValidationTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
     component.name = 'John'
     component.email = 'john@example.com'
     component.age = 25
@@ -310,11 +310,11 @@ test.group('Support Validation Feature', () => {
   })
 
   test('should set error bag when validation fails', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new ValidationTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new ValidationTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
     component.name = 'Jo' // Too short
     component.email = 'invalid-email' // Invalid email
     component.age = 15 // Too young
@@ -347,11 +347,11 @@ test.group('Support Validation Feature', () => {
     assert,
     cleanup,
   }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new ValidationTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new ValidationTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component)
@@ -384,7 +384,7 @@ test.group('Support Validation Feature', () => {
   })
 
   test('should validate using rules() method', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
@@ -405,7 +405,7 @@ test.group('Support Validation Feature', () => {
       }
     }
 
-    const component = new RulesComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new RulesComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component)
@@ -422,11 +422,11 @@ test.group('Support Validation Feature', () => {
   })
 
   test('should throw error when no schema found for validate()', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new ValidationTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new ValidationTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component)
@@ -448,11 +448,11 @@ test.group('Support Validation Feature', () => {
   })
 
   test('should validate with custom data parameter', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new ValidationTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new ValidationTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component)
