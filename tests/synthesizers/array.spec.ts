@@ -184,7 +184,10 @@ test.group('ArraySynth', () => {
       return value
     }
 
-    const target = [[1, 2], [3, 4]]
+    const target = [
+      [1, 2],
+      [3, 4],
+    ]
     const [result, meta] = await synth.dehydrate(target, dehydrateChild)
 
     // dehydrateChild processes nested arrays
