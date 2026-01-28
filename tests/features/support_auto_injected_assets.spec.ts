@@ -108,4 +108,55 @@ test.group('SupportAutoInjectedAssets', () => {
     assert.include(result, '</body>')
     assert.include(result, '</html>')
   })
+
+  test('should inject before closing tags (PHP parity)', async ({ assert }) => {
+    const html = '<html><head><title>X</title></head><body><h1>Content</h1></body></html>'
+    const assetsHead = '<!--head-->'
+    const assetsBody = '<!--body-->'
+
+    const result = SupportAutoInjectedAssets.injectAssets(html, assetsHead, assetsBody)
+
+    assert.include(result, '<title>X</title>')
+    assert.include(result, '<h1>Content</h1>')
+    assert.ok(result.includes('<!--head--></head>'), 'assets before </head>')
+    assert.ok(result.includes('<!--body--></body>'), 'assets before </body>')
+  })
+
+  test('should handle HTML without head/body (inject at html tags)', async ({ assert }) => {
+    const html = '<html><yolo /></html>'
+    const assetsHead = '<!--head-->'
+    const assetsBody = '<!--body-->'
+
+    const result = SupportAutoInjectedAssets.injectAssets(html, assetsHead, assetsBody)
+
+    assert.include(result, '<yolo />')
+    assert.ok(result.startsWith('<html><!--head-->'), 'assets after <html>')
+    assert.ok(result.includes('<!--body--></html>'), 'assets before </html>')
+  })
+
+  test('should handle weirdly formatted HTML (case-insensitive, whitespace)', async ({
+    assert,
+  }) => {
+    const html = `<!doctype html>
+<html
+  lang="en"
+>
+  <Head
+  >
+    <meta charset="utf-8"/>
+    <title></title>
+  </Head>
+  <body>
+  </body
+  >
+</html>`
+    const assetsHead = '<!--head-->'
+    const assetsBody = '<!--body-->'
+
+    const result = SupportAutoInjectedAssets.injectAssets(html, assetsHead, assetsBody)
+
+    assert.ok(/<!--head-->\s*<\/head>/i.test(result))
+    assert.ok(/<!--body-->\s*<\/body\s*>/i.test(result))
+    assert.include(result, '<title></title>')
+  })
 })
