@@ -102,7 +102,7 @@ test.group('Edge plugin', () => {
     assert,
     cleanup,
   }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const livewire = new LivewireFactory(app).create()
@@ -110,7 +110,7 @@ test.group('Edge plugin', () => {
 
     const edge = Edge.create().use(edgePluginLivewire(app, livewire, '1.0.0'))
     const ctx = new HttpContextFactory().create()
-    const component = new TestComponent({ ctx, app, id: 'test-id', name: 'counter' })
+    const component = new TestComponent({ ctx, app, router, id: 'test-id', name: 'counter' })
     const dataStore = new DataStore('test-store')
     const context = new ComponentContext(component)
 
@@ -128,7 +128,7 @@ test.group('Edge plugin', () => {
     assert,
     cleanup,
   }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const livewire = new LivewireFactory(app).create()
@@ -136,7 +136,7 @@ test.group('Edge plugin', () => {
 
     const edge = Edge.create().use(edgePluginLivewire(app, livewire, '1.0.0'))
     const ctx = new HttpContextFactory().create()
-    const component = new TestComponent({ ctx, app, id: 'test-id', name: 'counter' })
+    const component = new TestComponent({ ctx, app, router, id: 'test-id', name: 'counter' })
     const dataStore = new DataStore('test-store')
     const context = new ComponentContext(component)
 
@@ -150,7 +150,7 @@ test.group('Edge plugin', () => {
   })
 
   test('processLivewireComponents should process wire: attributes', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const livewire = new LivewireFactory(app).create()
@@ -158,7 +158,7 @@ test.group('Edge plugin', () => {
 
     const edge = Edge.create().use(edgePluginLivewire(app, livewire, '1.0.0'))
     const ctx = new HttpContextFactory().create()
-    const component = new TestComponent({ ctx, app, id: 'test-id', name: 'counter' })
+    const component = new TestComponent({ ctx, app, router, id: 'test-id', name: 'counter' })
     const dataStore = new DataStore('test-store')
     const context = new ComponentContext(component)
 
@@ -176,7 +176,7 @@ test.group('Edge plugin', () => {
     assert,
     cleanup,
   }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const livewire = new LivewireFactory(app).create()
@@ -184,7 +184,7 @@ test.group('Edge plugin', () => {
 
     const edge = Edge.create().use(edgePluginLivewire(app, livewire, '1.0.0'))
     const ctx = new HttpContextFactory().create()
-    const component = new TestComponent({ ctx, app, id: 'test-id', name: 'counter' })
+    const component = new TestComponent({ ctx, app, router, id: 'test-id', name: 'counter' })
     const dataStore = new DataStore('test-store')
     const context = new ComponentContext(component)
 
@@ -202,7 +202,7 @@ test.group('Edge plugin', () => {
     assert,
     cleanup,
   }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const livewire = new LivewireFactory(app).create()
@@ -210,7 +210,7 @@ test.group('Edge plugin', () => {
 
     const edge = Edge.create().use(edgePluginLivewire(app, livewire, '1.0.0'))
     const ctx = new HttpContextFactory().create()
-    const component = new TestComponent({ ctx, app, id: 'test-id', name: 'counter' })
+    const component = new TestComponent({ ctx, app, router, id: 'test-id', name: 'counter' })
     const dataStore = new DataStore('test-store')
     const context = new ComponentContext(component)
 
@@ -227,7 +227,7 @@ test.group('Edge plugin', () => {
     assert,
     cleanup,
   }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const livewire = new LivewireFactory(app).create()
@@ -235,7 +235,7 @@ test.group('Edge plugin', () => {
 
     const edge = Edge.create().use(edgePluginLivewire(app, livewire, '1.0.0'))
     const ctx = new HttpContextFactory().create()
-    const component = new TestComponent({ ctx, app, id: 'test-id', name: 'counter' })
+    const component = new TestComponent({ ctx, app, router, id: 'test-id', name: 'counter' })
     const dataStore = new DataStore('test-store')
     const context = new ComponentContext(component)
 
@@ -258,7 +258,7 @@ test.group('Edge plugin', () => {
     assert,
     cleanup,
   }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const livewire = new LivewireFactory(app).create()
@@ -266,7 +266,7 @@ test.group('Edge plugin', () => {
 
     const edge = Edge.create().use(edgePluginLivewire(app, livewire, '1.0.0'))
     const ctx = new HttpContextFactory().create()
-    const component = new TestComponent({ ctx, app, id: 'test-id', name: 'counter' })
+    const component = new TestComponent({ ctx, app, router, id: 'test-id', name: 'counter' })
     const dataStore = new DataStore('test-store')
     const context = new ComponentContext(component)
 
@@ -288,7 +288,7 @@ test.group('Edge plugin', () => {
     assert,
     cleanup,
   }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const livewire = new LivewireFactory(app).create()
@@ -296,7 +296,7 @@ test.group('Edge plugin', () => {
 
     const edge = Edge.create().use(edgePluginLivewire(app, livewire, '1.0.0'))
     const ctx = new HttpContextFactory().create()
-    const component = new TestComponent({ ctx, app, id: 'test-id', name: 'counter' })
+    const component = new TestComponent({ ctx, app, router, id: 'test-id', name: 'counter' })
     const dataStore = new DataStore('test-store')
     const context = new ComponentContext(component)
 
@@ -318,7 +318,7 @@ test.group('Edge plugin', () => {
     assert,
     cleanup,
   }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const livewire = new LivewireFactory(app).create()
@@ -326,7 +326,7 @@ test.group('Edge plugin', () => {
 
     const edge = Edge.create().use(edgePluginLivewire(app, livewire, '1.0.0'))
     const ctx = new HttpContextFactory().create()
-    const component = new TestComponent({ ctx, app, id: 'test-id', name: 'counter' })
+    const component = new TestComponent({ ctx, app, router, id: 'test-id', name: 'counter' })
     const dataStore = new DataStore('test-store')
     const context = new ComponentContext(component)
 
@@ -343,7 +343,7 @@ test.group('Edge plugin', () => {
     assert,
     cleanup,
   }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const livewire = new LivewireFactory(app).create()
@@ -351,7 +351,7 @@ test.group('Edge plugin', () => {
 
     const edge = Edge.create().use(edgePluginLivewire(app, livewire, '1.0.0'))
     const ctx = new HttpContextFactory().create()
-    const component = new TestComponent({ ctx, app, id: 'test-id', name: 'counter' })
+    const component = new TestComponent({ ctx, app, router, id: 'test-id', name: 'counter' })
     const dataStore = new DataStore('test-store')
     const context = new ComponentContext(component)
 
@@ -436,13 +436,13 @@ test.group('Edge plugin', () => {
   })
 
   test('@script tag should compile correctly', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const livewire = new LivewireFactory(app).create()
     const edge = Edge.create().use(edgePluginLivewire(app, livewire, '1.0.0'))
     const ctx = new HttpContextFactory().create()
-    const component = new TestComponent({ ctx, app, id: 'test-id', name: 'test.component' })
+    const component = new TestComponent({ ctx, app, router, id: 'test-id', name: 'test.component' })
     const dataStore = new DataStore('test-store')
     const context = new ComponentContext(component)
 
@@ -458,13 +458,13 @@ test.group('Edge plugin', () => {
   })
 
   test('@script tag should process mustache expressions', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const livewire = new LivewireFactory(app).create()
     const edge = Edge.create().use(edgePluginLivewire(app, livewire, '1.0.0'))
     const ctx = new HttpContextFactory().create()
-    const component = new TestComponent({ ctx, app, id: 'test-id', name: 'test.component' })
+    const component = new TestComponent({ ctx, app, router, id: 'test-id', name: 'test.component' })
     const dataStore = new DataStore('test-store')
     const context = new ComponentContext(component)
 
@@ -482,13 +482,13 @@ test.group('Edge plugin', () => {
   })
 
   test('@assets tag should compile correctly', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const livewire = new LivewireFactory(app).create()
     const edge = Edge.create().use(edgePluginLivewire(app, livewire, '1.0.0'))
     const ctx = new HttpContextFactory().create()
-    const component = new TestComponent({ ctx, app, id: 'test-id', name: 'test.component' })
+    const component = new TestComponent({ ctx, app, router, id: 'test-id', name: 'test.component' })
     const dataStore = new DataStore('test-store')
     const context = new ComponentContext(component)
 
@@ -504,13 +504,13 @@ test.group('Edge plugin', () => {
   })
 
   test('@assets tag should process mustache expressions', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const livewire = new LivewireFactory(app).create()
     const edge = Edge.create().use(edgePluginLivewire(app, livewire, '1.0.0'))
     const ctx = new HttpContextFactory().create()
-    const component = new TestComponent({ ctx, app, id: 'test-id', name: 'test.component' })
+    const component = new TestComponent({ ctx, app, router, id: 'test-id', name: 'test.component' })
     const dataStore = new DataStore('test-store')
     const context = new ComponentContext(component)
 
