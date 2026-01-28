@@ -68,9 +68,6 @@ export async function setupApp(providers: ProviderNode[] = []) {
         ]),
       },
     })
-    .preload((app) => {
-      app.config.set('app.appKey', 'teste-live')
-    })
     .create(BASE_URL, {
       importer: (filePath) => {
         if (filePath.startsWith('./') || filePath.startsWith('../')) {
@@ -86,27 +83,76 @@ export async function setupApp(providers: ProviderNode[] = []) {
   const ace = await app.container.make('ace')
   ace.ui.switchMode('raw')
 
-  return { ace, app, ignitor }
+  const router = await app.container.make('router')
+  return { ace, app, ignitor, router }
 }
 
 export const setupFakeAdonisProject = test.macro(async ($test) => {
+  const adonisrc = [
+    "import { defineConfig } from '@adonisjs/core/app'",
+    '',
+    'export default defineConfig({',
+    '  /*',
+    '  |--------------------------------------------------------------------------',
+    '  | Experimental flags',
+    '  |--------------------------------------------------------------------------',
+    '  |',
+    '  | The following features will be enabled by default in the next major release',
+    '  | of AdonisJS. You can opt into them today to avoid any breaking changes',
+    '  | during upgrade.',
+    '  |',
+    '  */',
+    '  experimental: {},',
+    '})',
+    '',
+  ].join('\n')
+
+  const kernel = [
+    "import router from '@adonisjs/core/services/router'",
+    "import server from '@adonisjs/core/services/server'",
+    '',
+    'server.use([])',
+    '',
+    'router.use([',
+    "  () => import('@adonisjs/core/bodyparser_middleware'),",
+    "  () => import('@adonisjs/session/session_middleware'),",
+    '])',
+    '',
+  ].join('\n')
+
   await Promise.all([
     $test.context.fs.create('.env', ''),
-    $test.context.fs.createJson('tsconfig.json', {}),
-    $test.context.fs.create('adonisrc.ts', `export default defineConfig({})`),
+    $test.context.fs.createJson('tsconfig.json', {
+      'compilerOptions': {
+        target: 'ESNext',
+        module: 'NodeNext',
+        lib: ['ESNext'],
+        noUnusedLocals: true,
+        noUnusedParameters: true,
+        isolatedModules: true,
+        removeComments: true,
+        esModuleInterop: true,
+        strictNullChecks: true,
+        allowSyntheticDefaultImports: true,
+        forceConsistentCasingInFileNames: true,
+        strictPropertyInitialization: true,
+        experimentalDecorators: true,
+        noImplicitAny: true,
+        strictBindCallApply: true,
+        strictFunctionTypes: true,
+        noImplicitThis: true,
+        skipLibCheck: true,
+      },
+      'ts-node': {
+        swc: true,
+      },
+    }),
+    $test.context.fs.createJson('package.json', {
+      name: 'adonisjs-livewire-test',
+      version: '1.0.0',
+    }),
+    $test.context.fs.create('adonisrc.ts', adonisrc),
     $test.context.fs.create('vite.config.ts', `export default { plugins: [] }`),
-    $test.context.fs.create(
-      'start/kernel.ts',
-      `
-        import router from '@adonisjs/core/services/router'
-        import server from '@adonisjs/core/services/server'
-  
-        router.use([
-          () => import('@adonisjs/core/bodyparser_middleware'),
-        ])
-  
-        server.use([])
-      `
-    ),
+    $test.context.fs.create('start/kernel.ts', kernel),
   ])
 })
