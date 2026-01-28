@@ -23,11 +23,11 @@ class TestComponent extends Component {
 
 test.group('Component', () => {
   test('should create component instance with required properties', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new TestComponent({ ctx, app, id: 'test-id', name: 'test-component' })
+    const component = new TestComponent({ ctx, app, router, id: 'test-id', name: 'test-component' })
 
     assert.equal(component.getId(), 'test-id')
     assert.equal(component.getName(), 'test-component')
@@ -38,11 +38,11 @@ test.group('Component', () => {
   })
 
   test('should set and get id property', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new TestComponent({ ctx, app, id: 'initial-id', name: 'test' })
+    const component = new TestComponent({ ctx, app, router, id: 'initial-id', name: 'test' })
 
     assert.equal(component.__id, 'initial-id')
     component.__id = 'new-id'
@@ -51,11 +51,11 @@ test.group('Component', () => {
   })
 
   test('should set and get name property', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new TestComponent({ ctx, app, id: 'test-id', name: 'initial-name' })
+    const component = new TestComponent({ ctx, app, router, id: 'test-id', name: 'initial-name' })
 
     assert.equal(component.__name, 'initial-name')
     component.__name = 'new-name'
@@ -64,22 +64,22 @@ test.group('Component', () => {
   })
 
   test('should set and get viewPath property', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new TestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new TestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     component.viewPath = 'components/test'
     assert.equal(component.viewPath, 'components/test')
   })
 
   test('should use compatibility methods for id', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new TestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new TestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     component.setId('new-id')
     assert.equal(component.getId(), 'new-id')
@@ -87,11 +87,11 @@ test.group('Component', () => {
   })
 
   test('should use compatibility methods for name', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new TestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new TestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     component.setName('new-name')
     assert.equal(component.getName(), 'new-name')
@@ -99,22 +99,22 @@ test.group('Component', () => {
   })
 
   test('should use compatibility method for viewPath', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new TestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new TestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     component.setViewPath('components/new-view')
     assert.equal(component.viewPath, 'components/new-view')
   })
 
   test('should set and get viewData', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new TestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new TestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const testData = { key1: 'value1', key2: 123 }
     component.viewData = testData
@@ -122,11 +122,11 @@ test.group('Component', () => {
   })
 
   test('should set view renderer', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new TestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new TestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const edge = Edge.create()
     const renderer = edge.createRenderer()
@@ -143,11 +143,11 @@ test.group('Component', () => {
     assert,
     cleanup,
   }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new TestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new TestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     assert.throws(() => {
       // @ts-ignore - accessing view to trigger error
@@ -157,7 +157,7 @@ test.group('Component', () => {
   })
 
   test('should render component when viewPath is set', async ({ assert, cleanup, fs }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
@@ -165,7 +165,7 @@ test.group('Component', () => {
     class RenderTestComponent extends Component {
       // No render() override - will use BaseComponent.render()
     }
-    const component = new RenderTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new RenderTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     // Create template file
     await fs.create('test-view.edge', '<div>Test View</div>')
@@ -181,11 +181,11 @@ test.group('Component', () => {
   })
 
   test('should set skipRender in store', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new TestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new TestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component)
@@ -201,11 +201,11 @@ test.group('Component', () => {
   })
 
   test('should set skipRender with custom HTML in store', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new TestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new TestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component)
@@ -221,11 +221,11 @@ test.group('Component', () => {
   })
 
   test('should set skipMount in store', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new TestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new TestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component)
@@ -241,11 +241,11 @@ test.group('Component', () => {
   })
 
   test('should set skipHydrate in store', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new TestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new TestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component)
@@ -261,11 +261,11 @@ test.group('Component', () => {
   })
 
   test('should have HandlesEvents methods available', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new TestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new TestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     // Component should have methods from HandlesEvents
     assert.isFunction(component.dispatch)
@@ -273,22 +273,22 @@ test.group('Component', () => {
   })
 
   test('should have HandlesRedirects methods available', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new TestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new TestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     // Component should have methods from HandlesRedirects
     assert.isFunction(component.redirect)
   })
 
   test('should have HandlesValidation methods available', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new TestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new TestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     // Component should have methods from HandlesValidation
     assert.isFunction(component.setErrorBag)
@@ -298,22 +298,22 @@ test.group('Component', () => {
   })
 
   test('should have HandlesJsEvaluation methods available', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new TestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new TestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     // Component should have methods from HandlesJsEvaluation
     assert.isFunction(component.js)
   })
 
   test('should have HandlesPageComponents feature available', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new TestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new TestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     // HandlesPageComponents is mixed in but doesn't add methods directly
     // It's used for internal functionality
@@ -321,11 +321,11 @@ test.group('Component', () => {
   })
 
   test('should have HandlesDecorators methods available', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new TestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new TestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     // Component should have methods from HandlesDecorators
     assert.isFunction(component.getDecorators)
