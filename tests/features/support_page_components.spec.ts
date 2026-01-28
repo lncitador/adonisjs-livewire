@@ -16,11 +16,17 @@ class PageComponentsTestComponent extends Component {
 
 test.group('HandlesPageComponents', () => {
   test('should be a mixin that extends BaseComponent', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new PageComponentsTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new PageComponentsTestComponent({
+      ctx,
+      app,
+      router,
+      id: 'test-id',
+      name: 'test',
+    })
 
     // HandlesPageComponents is an empty mixin, just verify component works
     assert.isDefined(component)
@@ -51,11 +57,17 @@ test.group('Layout Decorator', () => {
   })
 
   test('should add layout to store on boot', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new PageComponentsTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new PageComponentsTestComponent({
+      ctx,
+      app,
+      router,
+      id: 'test-id',
+      name: 'test',
+    })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, false)
@@ -83,11 +95,17 @@ test.group('Layout Decorator', () => {
     assert,
     cleanup,
   }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new PageComponentsTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new PageComponentsTestComponent({
+      ctx,
+      app,
+      router,
+      id: 'test-id',
+      name: 'test',
+    })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, false)
@@ -120,11 +138,17 @@ test.group('Title Decorator', () => {
   })
 
   test('should share title with view on render', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new PageComponentsTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new PageComponentsTestComponent({
+      ctx,
+      app,
+      router,
+      id: 'test-id',
+      name: 'test',
+    })
 
     const decorator = new Title('My Page Title')
     decorator.boot(component)
@@ -139,11 +163,17 @@ test.group('Title Decorator', () => {
   })
 
   test('should handle different title values', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new PageComponentsTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new PageComponentsTestComponent({
+      ctx,
+      app,
+      router,
+      id: 'test-id',
+      name: 'test',
+    })
 
     const titles = ['Home', 'About Us', 'Contact', 'Dashboard']
 
