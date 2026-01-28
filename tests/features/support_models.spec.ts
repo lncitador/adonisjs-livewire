@@ -22,11 +22,11 @@ test.group('Modelable Decorator', () => {
   })
 
   test('should add binding to store on mount', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new ModelableTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new ModelableTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, false)
@@ -54,11 +54,11 @@ test.group('Modelable Decorator', () => {
     assert,
     cleanup,
   }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new ModelableTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new ModelableTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, false)
@@ -90,11 +90,11 @@ test.group('Modelable Decorator', () => {
   })
 
   test('should handle different outer and inner values', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new ModelableTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new ModelableTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, false)
