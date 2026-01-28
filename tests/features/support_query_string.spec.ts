@@ -40,12 +40,18 @@ test.group('Url Decorator', () => {
   })
 
   test('should read value from query string on mount', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
     ctx.request.updateQs({ search: 'test query' })
-    const component = new QueryStringTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new QueryStringTestComponent({
+      ctx,
+      app,
+      router,
+      id: 'test-id',
+      name: 'test',
+    })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, false)
@@ -67,11 +73,17 @@ test.group('Url Decorator', () => {
     assert,
     cleanup,
   }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new QueryStringTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new QueryStringTestComponent({
+      ctx,
+      app,
+      router,
+      id: 'test-id',
+      name: 'test',
+    })
     component.search = 'initial'
 
     const dataStore = new DataStore('test-store')
@@ -95,12 +107,18 @@ test.group('Url Decorator', () => {
     assert,
     cleanup,
   }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
     ctx.request.updateQs({ filter: null })
-    const component = new QueryStringTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new QueryStringTestComponent({
+      ctx,
+      app,
+      router,
+      id: 'test-id',
+      name: 'test',
+    })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, false)
@@ -122,12 +140,18 @@ test.group('Url Decorator', () => {
     assert,
     cleanup,
   }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
     ctx.request.updateQs({ filter: null })
-    const component = new QueryStringTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new QueryStringTestComponent({
+      ctx,
+      app,
+      router,
+      id: 'test-id',
+      name: 'test',
+    })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, false)
@@ -146,11 +170,17 @@ test.group('Url Decorator', () => {
   })
 
   test('should add url effect on dehydrate when mounting', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new QueryStringTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new QueryStringTestComponent({
+      ctx,
+      app,
+      router,
+      id: 'test-id',
+      name: 'test',
+    })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, true) // mounting = true
@@ -176,11 +206,17 @@ test.group('Url Decorator', () => {
   })
 
   test('should not add url effect on dehydrate when not mounting', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new QueryStringTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new QueryStringTestComponent({
+      ctx,
+      app,
+      router,
+      id: 'test-id',
+      name: 'test',
+    })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, false) // mounting = false
@@ -202,11 +238,17 @@ test.group('Url Decorator', () => {
     assert,
     cleanup,
   }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new QueryStringTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new QueryStringTestComponent({
+      ctx,
+      app,
+      router,
+      id: 'test-id',
+      name: 'test',
+    })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, false)
@@ -227,11 +269,17 @@ test.group('Url Decorator', () => {
   })
 
   test('should not change value on update when nullable is true', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new QueryStringTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new QueryStringTestComponent({
+      ctx,
+      app,
+      router,
+      id: 'test-id',
+      name: 'test',
+    })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, false)
@@ -252,11 +300,17 @@ test.group('Url Decorator', () => {
   })
 
   test('should not update when property name does not match', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new QueryStringTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new QueryStringTestComponent({
+      ctx,
+      app,
+      router,
+      id: 'test-id',
+      name: 'test',
+    })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, false)
@@ -280,11 +334,17 @@ test.group('Url Decorator', () => {
     assert,
     cleanup,
   }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new QueryStringTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new QueryStringTestComponent({
+      ctx,
+      app,
+      router,
+      id: 'test-id',
+      name: 'test',
+    })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, true)
@@ -306,11 +366,17 @@ test.group('Url Decorator', () => {
     assert,
     cleanup,
   }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new QueryStringTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new QueryStringTestComponent({
+      ctx,
+      app,
+      router,
+      id: 'test-id',
+      name: 'test',
+    })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, true)
