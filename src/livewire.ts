@@ -415,10 +415,12 @@ export default class Livewire {
     }
 
     let componentId = id ?? string.generateRandom(20)
+    const router = await this.app.container.make('router')
 
     let component = new LivewireComponent({
       ctx,
       app: this.app,
+      router,
       id: componentId,
       name,
     })
@@ -707,7 +709,7 @@ export default class Livewire {
         continue
       }
 
-      if (['ctx', 'app'].includes(key)) {
+      if (['ctx', 'app', 'router'].includes(key)) {
         continue
       }
 
