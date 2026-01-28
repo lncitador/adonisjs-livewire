@@ -50,11 +50,11 @@ test.group('Lazy Decorator', () => {
 
 test.group('SupportLazyLoading', () => {
   test('should skip mount and render when lazy param is true', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new LazyTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new LazyTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     // Initialize view renderer
     const edge = Edge.create()
@@ -89,11 +89,11 @@ test.group('SupportLazyLoading', () => {
   })
 
   test('should not skip mount when lazy param is false', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new LazyTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new LazyTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, false)
@@ -113,11 +113,11 @@ test.group('SupportLazyLoading', () => {
   })
 
   test('should skip mount when Lazy decorator exists', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new LazyTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new LazyTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     // Initialize view renderer
     const edge = Edge.create()
@@ -155,11 +155,11 @@ test.group('SupportLazyLoading', () => {
   })
 
   test('should use isolate from Lazy decorator', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new LazyTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new LazyTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     // Initialize view renderer
     const edge = Edge.create()
@@ -195,11 +195,11 @@ test.group('SupportLazyLoading', () => {
   })
 
   test('should skip hydrate when lazyLoaded is false in memo', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new LazyTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new LazyTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, false)
@@ -220,11 +220,11 @@ test.group('SupportLazyLoading', () => {
   })
 
   test('should not skip hydrate when lazyLoaded is true in memo', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new LazyTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new LazyTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, false)
@@ -247,11 +247,11 @@ test.group('SupportLazyLoading', () => {
   })
 
   test('should add lazyLoaded false memo when mounting', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new LazyTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new LazyTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, false)
@@ -275,11 +275,11 @@ test.group('SupportLazyLoading', () => {
   })
 
   test('should add lazyLoaded true memo when hydrating', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new LazyTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new LazyTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, false)
@@ -301,11 +301,11 @@ test.group('SupportLazyLoading', () => {
   })
 
   test('should not process call when method is not __lazyLoad', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new LazyTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new LazyTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, false)
