@@ -15,11 +15,17 @@ class ScriptsAssetsTestComponent extends Component {
 
 test.group('SupportScriptsAndAssets', () => {
   test('should store scripts from memo on hydrate', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new ScriptsAssetsTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new ScriptsAssetsTestComponent({
+      ctx,
+      app,
+      router,
+      id: 'test-id',
+      name: 'test',
+    })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, false)
@@ -40,11 +46,17 @@ test.group('SupportScriptsAndAssets', () => {
   })
 
   test('should store assets from memo on hydrate', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new ScriptsAssetsTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new ScriptsAssetsTestComponent({
+      ctx,
+      app,
+      router,
+      id: 'test-id',
+      name: 'test',
+    })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, false)
@@ -65,11 +77,17 @@ test.group('SupportScriptsAndAssets', () => {
   })
 
   test('should add new scripts to effect on dehydrate', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new ScriptsAssetsTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new ScriptsAssetsTestComponent({
+      ctx,
+      app,
+      router,
+      id: 'test-id',
+      name: 'test',
+    })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, false)
@@ -92,11 +110,17 @@ test.group('SupportScriptsAndAssets', () => {
   })
 
   test('should not add already executed scripts to effect', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new ScriptsAssetsTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new ScriptsAssetsTestComponent({
+      ctx,
+      app,
+      router,
+      id: 'test-id',
+      name: 'test',
+    })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, false)
@@ -124,11 +148,17 @@ test.group('SupportScriptsAndAssets', () => {
   })
 
   test('should add new assets to renderedAssets on dehydrate', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new ScriptsAssetsTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new ScriptsAssetsTestComponent({
+      ctx,
+      app,
+      router,
+      id: 'test-id',
+      name: 'test',
+    })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, false)
@@ -153,11 +183,17 @@ test.group('SupportScriptsAndAssets', () => {
   })
 
   test('should not add already executed assets to renderedAssets', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new ScriptsAssetsTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new ScriptsAssetsTestComponent({
+      ctx,
+      app,
+      router,
+      id: 'test-id',
+      name: 'test',
+    })
 
     // Clear renderedAssets before test
     const reqId = ctx.request.id()!
@@ -190,7 +226,7 @@ test.group('SupportScriptsAndAssets', () => {
   })
 
   test('should use reqId to isolate assets per request', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx1 = new HttpContextFactory().create()
@@ -201,12 +237,14 @@ test.group('SupportScriptsAndAssets', () => {
       app,
       id: 'test-id-1',
       name: 'test1',
+      router,
     })
     const component2 = new ScriptsAssetsTestComponent({
       ctx: ctx2,
       app,
       id: 'test-id-2',
       name: 'test2',
+      router,
     })
 
     // Clear all renderedAssets before test to ensure clean state
@@ -272,11 +310,17 @@ test.group('SupportScriptsAndAssets', () => {
     assert,
     cleanup,
   }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new ScriptsAssetsTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new ScriptsAssetsTestComponent({
+      ctx,
+      app,
+      router,
+      id: 'test-id',
+      name: 'test',
+    })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, false)
@@ -304,11 +348,17 @@ test.group('SupportScriptsAndAssets', () => {
   })
 
   test('should handle empty scripts and assets', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new ScriptsAssetsTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new ScriptsAssetsTestComponent({
+      ctx,
+      app,
+      router,
+      id: 'test-id',
+      name: 'test',
+    })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, false)
