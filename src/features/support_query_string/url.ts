@@ -8,7 +8,7 @@ export default class Url extends Decorator {
     public as: string | null = null,
     public history = false,
     public keep = false,
-    public except = null,
+    public except: string[] | null = null,
     public nullable: boolean | null = null
   ) {
     super()
