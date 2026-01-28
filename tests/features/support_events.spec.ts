@@ -31,11 +31,11 @@ class EventsTestComponent extends Component {
 
 test.group('Support Events Feature', () => {
   test('should dispatch events and store them', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new EventsTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new EventsTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component)
@@ -59,11 +59,11 @@ test.group('Support Events Feature', () => {
   })
 
   test('should dispatch events with to parameter', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new EventsTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new EventsTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component)
@@ -80,11 +80,11 @@ test.group('Support Events Feature', () => {
   })
 
   test('should dispatch events with self parameter', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new EventsTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new EventsTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component)
@@ -101,11 +101,11 @@ test.group('Support Events Feature', () => {
   })
 
   test('should dispatch multiple events', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new EventsTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new EventsTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component)
@@ -124,18 +124,18 @@ test.group('Support Events Feature', () => {
   })
 
   test('should return empty listeners object by default', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new EventsTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new EventsTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const listeners = component.getListeners()
     assert.deepEqual(listeners, { 'test-event': 'handleTestEvent' })
   })
 
   test('should handle component without getListeners override', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
@@ -144,7 +144,7 @@ test.group('Support Events Feature', () => {
         return Promise.resolve('<div>Simple</div>')
       }
     }
-    const component = new SimpleComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new SimpleComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const listeners = component.getListeners()
     assert.deepEqual(listeners, {})
