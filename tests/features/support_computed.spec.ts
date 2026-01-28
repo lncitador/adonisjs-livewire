@@ -3,6 +3,10 @@ import { HttpContextFactory } from '@adonisjs/core/factories/http'
 import { setupApp } from '../helpers.js'
 import { Component } from '../../src/component.js'
 import Computed from '../../src/features/support_computed/computed.js'
+import { SupportDecorators } from '../../src/features/support_decorators/support_decorators.js'
+import { DataStore } from '../../src/store.js'
+import ComponentContext from '../../src/component_context.js'
+import { livewireContext } from '../../src/store.js'
 import { Edge } from 'edge.js'
 
 class ComputedTestComponent extends Component {
@@ -31,11 +35,11 @@ test.group('Computed Decorator', () => {
   })
 
   test('should share computed value with view on render', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new ComputedTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new ComputedTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const edge = Edge.create()
     const renderer = edge.createRenderer()
@@ -56,11 +60,11 @@ test.group('Computed Decorator', () => {
   })
 
   test('should not share if method does not exist', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new ComputedTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new ComputedTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const edge = Edge.create()
     const renderer = edge.createRenderer()
@@ -81,11 +85,11 @@ test.group('Computed Decorator', () => {
   })
 
   test('should handle async computed methods', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new ComputedTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new ComputedTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const edge = Edge.create()
     const renderer = edge.createRenderer()
@@ -106,7 +110,7 @@ test.group('Computed Decorator', () => {
   })
 
   test('should handle different value types', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     class TestComponent extends Component {
@@ -136,7 +140,7 @@ test.group('Computed Decorator', () => {
     }
 
     const ctx = new HttpContextFactory().create()
-    const component = new TestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new TestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const edge = Edge.create()
     const renderer = edge.createRenderer()
@@ -171,5 +175,109 @@ test.group('Computed Decorator', () => {
     assert.isTrue(sharedData.booleanValue)
     assert.deepEqual(sharedData.objectValue, { nested: 'value' })
     assert.deepEqual(sharedData.arrayValue, [1, 2, 3])
+  })
+
+  test('should memoize computed (PHP parity: method runs once per request)', async ({
+    assert,
+    cleanup,
+  }) => {
+    const { app, router } = await setupApp()
+    cleanup(() => app.terminate())
+
+    let count = 0
+    class MemoTestComponent extends Component {
+      async foo() {
+        count++
+        return 'memo'
+      }
+
+      async render() {
+        return Promise.resolve('<div>Memo</div>')
+      }
+    }
+
+    const ctx = new HttpContextFactory().create()
+    const component = new MemoTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
+    const edge = Edge.create()
+    component.view = edge.createRenderer()
+
+    const decorator = new Computed('foo', 'foo')
+    decorator.boot(component)
+
+    await decorator.getValue()
+    await decorator.getValue()
+    await decorator.getValue()
+
+    assert.equal(count, 1)
+    assert.equal(await decorator.getValue(), 'memo')
+  })
+
+  test('should bust cache on clearCache (PHP parity: unset)', async ({ assert, cleanup }) => {
+    const { app, router } = await setupApp()
+    cleanup(() => app.terminate())
+
+    let count = 0
+    class UnsetTestComponent extends Component {
+      async bar() {
+        count++
+        return count
+      }
+
+      async render() {
+        return Promise.resolve('<div>Unset</div>')
+      }
+    }
+
+    const ctx = new HttpContextFactory().create()
+    const component = new UnsetTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
+    const edge = Edge.create()
+    component.view = edge.createRenderer()
+
+    const decorator = new Computed('bar', 'bar')
+    decorator.boot(component)
+
+    assert.equal(await decorator.getValue(), 1)
+    decorator.clearCache()
+    assert.equal(await decorator.getValue(), 2)
+    decorator.clearCache()
+    assert.equal(await decorator.getValue(), 3)
+  })
+
+  test('should throw when computed method called as action (PHP parity)', async ({
+    assert,
+    cleanup,
+  }) => {
+    const { app, router } = await setupApp()
+    cleanup(() => app.terminate())
+
+    const ctx = new HttpContextFactory().create()
+    const component = new ComputedTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
+    const edge = Edge.create()
+    component.view = edge.createRenderer()
+
+    const decorator = new Computed('fullName', 'fullName')
+    decorator.boot(component)
+    component.addDecorator(decorator)
+
+    const hook = new SupportDecorators()
+    hook.setComponent(component)
+    hook.setApp(app)
+
+    const dataStore = new DataStore('test-store')
+    const componentContext = new ComponentContext(component, false)
+
+    await livewireContext.run(
+      { dataStore, context: componentContext, features: [], ctx },
+      async () => {
+        try {
+          await hook.call('fullName', [], () => {})
+          assert.fail('Expected CannotCallComputedDirectlyException')
+        } catch (err: any) {
+          assert.equal(err.name, 'CannotCallComputedDirectlyException')
+          assert.include(err.message, 'fullName')
+          assert.include(err.message, 'test')
+        }
+      }
+    )
   })
 })
