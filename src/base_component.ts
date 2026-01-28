@@ -1,7 +1,7 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import { store } from './store.js'
 import { Edge } from 'edge.js'
-import { ApplicationService } from '@adonisjs/core/types'
+import { ApplicationService, HttpRouterService } from '@adonisjs/core/types'
 
 export class BaseComponent {
   // Hard private fields (Runtime private)
@@ -15,6 +15,7 @@ export class BaseComponent {
 
   declare app: ApplicationService
   declare ctx: HttpContext
+  declare router: HttpRouterService
 
   // Getters & Setters for controlled access
   get __id(): string {
