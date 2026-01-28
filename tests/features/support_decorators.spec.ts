@@ -98,11 +98,11 @@ class TestDecorator2 extends Decorator {
 
 test.group('HandlesDecorators', () => {
   test('should return empty array when no decorators added', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new DecoratorTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new DecoratorTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const decorators = component.getDecorators()
 
@@ -111,11 +111,11 @@ test.group('HandlesDecorators', () => {
   })
 
   test('should add decorator and retrieve it', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new DecoratorTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new DecoratorTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const decorator = new TestDecorator1()
     component.addDecorator(decorator)
@@ -127,11 +127,11 @@ test.group('HandlesDecorators', () => {
   })
 
   test('should add multiple decorators', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new DecoratorTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new DecoratorTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const decorator1 = new TestDecorator1()
     const decorator2 = new TestDecorator2()
@@ -148,11 +148,11 @@ test.group('HandlesDecorators', () => {
 
 test.group('SupportDecorators', () => {
   test('should call boot on all decorators', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new DecoratorTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new DecoratorTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, false)
@@ -184,11 +184,11 @@ test.group('SupportDecorators', () => {
     assert,
     cleanup,
   }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new DecoratorTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new DecoratorTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, false)
@@ -219,11 +219,11 @@ test.group('SupportDecorators', () => {
     assert,
     cleanup,
   }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new DecoratorTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new DecoratorTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, false)
@@ -255,11 +255,11 @@ test.group('SupportDecorators', () => {
     assert,
     cleanup,
   }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new DecoratorTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new DecoratorTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, false)
@@ -287,11 +287,11 @@ test.group('SupportDecorators', () => {
     assert,
     cleanup,
   }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new DecoratorTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new DecoratorTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, false)
@@ -319,11 +319,11 @@ test.group('SupportDecorators', () => {
     assert,
     cleanup,
   }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new DecoratorTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new DecoratorTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, false)
@@ -351,11 +351,11 @@ test.group('SupportDecorators', () => {
     assert,
     cleanup,
   }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new DecoratorTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new DecoratorTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, false)
@@ -383,11 +383,11 @@ test.group('SupportDecorators', () => {
     assert,
     cleanup,
   }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new DecoratorTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new DecoratorTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, false)
@@ -416,11 +416,11 @@ test.group('SupportDecorators', () => {
   })
 
   test('should call call on all decorators that have call method', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new DecoratorTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new DecoratorTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, false)
@@ -448,11 +448,11 @@ test.group('SupportDecorators', () => {
   })
 
   test('should execute decorators in order', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new DecoratorTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new DecoratorTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, false)
@@ -483,11 +483,11 @@ test.group('SupportDecorators', () => {
     assert,
     cleanup,
   }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new DecoratorTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new DecoratorTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, false)
