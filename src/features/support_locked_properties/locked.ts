@@ -6,8 +6,10 @@ export default class Locked extends Decorator {
     super()
   }
 
-  update(property: string) {
-    if (this.name !== property) {
+  update(fullPath: string, _newValue?: unknown) {
+    const isExact = fullPath === this.name
+    const isDeep = fullPath.startsWith(this.name + '.')
+    if (!isExact && !isDeep) {
       return
     }
     throw new CannotUpdateLockedPropertyException(this.name)

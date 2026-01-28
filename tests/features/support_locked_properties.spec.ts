@@ -22,9 +22,9 @@ test.group('Locked Decorator', () => {
   })
 
   test('should throw exception when locked property is updated', async ({ assert }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     const ctx = new HttpContextFactory().create()
-    const component = new LockedTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new LockedTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const decorator = new Locked('lockedProperty')
     decorator.boot(component)
@@ -35,9 +35,9 @@ test.group('Locked Decorator', () => {
   })
 
   test('should not throw when different property is updated', async ({ assert }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     const ctx = new HttpContextFactory().create()
-    const component = new LockedTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new LockedTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const decorator = new Locked('lockedProperty')
     decorator.boot(component)
@@ -48,15 +48,46 @@ test.group('Locked Decorator', () => {
   })
 
   test('should not throw when property name does not match', async ({ assert }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     const ctx = new HttpContextFactory().create()
-    const component = new LockedTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new LockedTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const decorator = new Locked('count')
     decorator.boot(component)
 
     assert.doesNotThrow(() => {
       decorator.update('lockedProperty')
+    })
+  })
+
+  test('should throw when deeply updating locked property (PHP parity)', async ({ assert }) => {
+    const { app, router } = await setupApp()
+    const ctx = new HttpContextFactory().create()
+    const component = new LockedTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
+
+    const decorator = new Locked('lockedProperty')
+    decorator.boot(component)
+
+    assert.throws(
+      () => {
+        decorator.update('lockedProperty.nested.key')
+      },
+      'Cannot update locked property: [lockedProperty]'
+    )
+  })
+
+  test('should not throw when updating similar name (count vs count2, PHP parity)', async ({
+    assert,
+  }) => {
+    const { app, router } = await setupApp()
+    const ctx = new HttpContextFactory().create()
+    const component = new LockedTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
+
+    const decorator = new Locked('count')
+    decorator.boot(component)
+
+    assert.doesNotThrow(() => {
+      decorator.update('count2')
     })
   })
 })
