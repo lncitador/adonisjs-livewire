@@ -8,7 +8,8 @@
   var __commonJS = (cb, mod) =>
     function __require() {
       return (
-        mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports
+        mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod),
+        mod.exports
       )
     }
   var __copyProps = (to, from, except, desc) => {
@@ -5290,11 +5291,11 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ''}`,
     var keys = Object.keys(object)
     if (Object.getOwnPropertySymbols) {
       var symbols = Object.getOwnPropertySymbols(object)
-      enumerableOnly &&
+      ;(enumerableOnly &&
         (symbols = symbols.filter(function (sym) {
           return Object.getOwnPropertyDescriptor(object, sym).enumerable
         })),
-        keys.push.apply(keys, symbols)
+        keys.push.apply(keys, symbols))
     }
     return keys
   }
@@ -6045,14 +6046,14 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ''}`,
           return initial
         },
         (func) => {
-          ;(func.as = (key) => {
+          ;((func.as = (key) => {
             alias = key
             return func
           }),
             (func.using = (target) => {
               storage = target
               return func
-            })
+            }))
         }
       )
     }
