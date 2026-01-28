@@ -1,21 +1,21 @@
 import ComponentHook from '../../component_hook.js'
 
 export class SupportDecorators extends ComponentHook {
-  async boot(params) {
+  async boot(...params: any[]) {
     for (const decorator of this.component.getDecorators()) {
       decorator.boot(this.component)
 
       if (typeof decorator['boot'] !== 'function') continue
 
-      await decorator['boot'](params)
+      await decorator['boot'](...params)
     }
   }
 
-  async mount(params) {
+  async mount(...params: any[]) {
     for (const decorator of this.component.getDecorators()) {
       if (typeof decorator['mount'] !== 'function') continue
 
-      await decorator['mount'](params)
+      await decorator['mount'](...params)
     }
   }
 
@@ -39,35 +39,35 @@ export class SupportDecorators extends ComponentHook {
     }
   }
 
-  async hydrate(params) {
+  async hydrate(...params: any[]) {
     for (const decorator of this.component.getDecorators()) {
       if (typeof decorator['hydrate'] !== 'function') continue
 
-      await decorator['hydrate'](params)
+      await decorator['hydrate'](...params)
     }
   }
 
-  async dehydrate(params) {
+  async dehydrate(...params: any[]) {
     for (const decorator of this.component.getDecorators()) {
       if (typeof decorator['dehydrate'] !== 'function') continue
 
-      await decorator['dehydrate'](params)
+      await decorator['dehydrate'](...params)
     }
   }
 
-  async destroy(params) {
+  async destroy(...params: any[]) {
     for (const decorator of this.component.getDecorators()) {
       if (typeof decorator['destroy'] !== 'function') continue
 
-      await decorator['destroy'](params)
+      await decorator['destroy'](...params)
     }
   }
 
-  async exception(params) {
+  async exception(...params: any[]) {
     for (const decorator of this.component.getDecorators()) {
-      if (typeof decorator['destroy'] !== 'function') continue
+      if (typeof decorator['exception'] !== 'function') continue
 
-      await decorator['destroy'](params)
+      await decorator['exception'](...params)
     }
   }
 
