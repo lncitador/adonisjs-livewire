@@ -4,11 +4,11 @@ import { Route } from '@adonisjs/core/http'
 import { SupportLazyLoading } from '../src/features/support_lazy_loading/support_lazy_loading.js'
 import { Constructor } from '@adonisjs/http-server/types'
 import edge, { type Edge } from 'edge.js'
-import { dirname } from 'node:path'
+import path, { dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { SupportDecorators } from '../src/features/support_decorators/support_decorators.js'
 import { SupportEvents } from '../src/features/support_events/support_events.js'
-import { SupportJsEvaluation } from '../src/features/support_js_valuation/support_js_evaluation.js'
+import { SupportJsEvaluation } from '../src/features/support_js_evaluation/support_js_evaluation.js'
 import { SupportRedirects } from '../src/features/support_redirects/support_redirects.js'
 import { SupportScriptsAndAssets } from '../src/features/support_scripts_and_assets/support_scripts_and_assets.js'
 import { SupportValidation } from '../src/features/support_validation/support_validation.js'
@@ -21,8 +21,6 @@ import { ArraySynth } from '../src/synthesizers/array.js'
 import debug from '../src/debug.js'
 
 const currentDirname = dirname(fileURLToPath(import.meta.url))
-
-const packageJson = JSON.parse(fs.readFileSync(`${currentDirname}/../../package.json`, 'utf-8'))
 
 declare module '@adonisjs/core/http' {
   interface Router {
@@ -71,6 +69,12 @@ export default class LivewireProvider {
 
     this.app.container.singleton('livewire', () => {
       return livewire
+    })
+
+    const packageJsonPath = path.join(fileURLToPath(this.app.appRoot), 'package.json')
+
+    const packageJson: { version: string } = await import(packageJsonPath, {
+      with: { type: 'json' },
     })
 
     /**
