@@ -15,11 +15,11 @@ class RenderlessTestComponent extends Component {
 
 test.group('Renderless Decorator', () => {
   test('should call skipRender when call is invoked', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new RenderlessTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new RenderlessTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, false)
@@ -39,11 +39,11 @@ test.group('Renderless Decorator', () => {
   })
 
   test('should set skipRender to true in store', async ({ assert, cleanup }) => {
-    const { app } = await setupApp()
+    const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
     const ctx = new HttpContextFactory().create()
-    const component = new RenderlessTestComponent({ ctx, app, id: 'test-id', name: 'test' })
+    const component = new RenderlessTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const dataStore = new DataStore('test-store')
     const componentContext = new ComponentContext(component, false)
