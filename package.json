@@ -64,6 +64,7 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
+    "@poppinss/macroable": "^1.1.0",
     "@poppinss/utils": "^6.9.2",
     "edge-parser": "^9.0.4",
     "edge-tags": "^0.0.5",
