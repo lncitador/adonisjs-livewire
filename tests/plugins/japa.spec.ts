@@ -116,7 +116,10 @@ test.group('Japa API Client Plugin', () => {
     })
   })
 
-  test('livewireComponents should parse Livewire response', async ({ assert, cleanup }) => {
+  test('livewire() should parse Livewire response and return TestableResponse', async ({
+    assert,
+    cleanup,
+  }) => {
     const { app } = await setupApp()
     cleanup(() => app.terminate())
 
@@ -147,16 +150,21 @@ test.group('Japa API Client Plugin', () => {
           ],
         })
 
-      const components = response.livewireComponents
-      assert.isDefined(components)
+      const testable = response.livewire()
+      assert.isDefined(testable)
+      assert.equal(testable.name(), 'test')
+      // The server generates its own component, so id() returns the server-generated ID
+      assert.isDefined(testable.id())
+
+      const components = testable.components()
       assert.isArray(components)
-      assert.lengthOf(components!, 1)
-      assert.property(components![0], 'snapshot')
-      assert.property(components![0], 'effects')
+      assert.lengthOf(components, 1)
+      assert.property(components[0], 'snapshot')
+      assert.property(components[0], 'effects')
     })
   })
 
-  test('livewireSnapshot should return first component snapshot', async ({ assert, cleanup }) => {
+  test('snapshot() should return first component snapshot', async ({ assert, cleanup }) => {
     const { app } = await setupApp()
     cleanup(() => app.terminate())
 
@@ -187,16 +195,17 @@ test.group('Japa API Client Plugin', () => {
           ],
         })
 
-      const snapshot = response.livewireSnapshot
+      const testable = response.livewire()
+      const snapshot = testable.snapshot()
       assert.isDefined(snapshot)
       assert.property(snapshot, 'data')
       assert.property(snapshot, 'memo')
       assert.property(snapshot, 'checksum')
-      assert.equal(snapshot!.memo.name, 'test')
+      assert.equal(snapshot.memo.name, 'test')
     })
   })
 
-  test('livewireEffects should return first component effects', async ({ assert, cleanup }) => {
+  test('effects() should return first component effects', async ({ assert, cleanup }) => {
     const { app } = await setupApp()
     cleanup(() => app.terminate())
 
@@ -228,15 +237,16 @@ test.group('Japa API Client Plugin', () => {
           ],
         })
 
-      const effects = response.livewireEffects
+      const testable = response.livewire()
+      const effects = testable.effects()
       assert.isDefined(effects)
       assert.property(effects, 'html')
       assert.property(effects, 'dispatches')
-      assert.include(effects!.dispatches, 'test-event')
+      assert.include(effects.dispatches, 'test-event')
     })
   })
 
-  test('livewireComponent should return component name', async ({ assert, cleanup }) => {
+  test('name() should return component name', async ({ assert, cleanup }) => {
     const { app } = await setupApp()
     cleanup(() => app.terminate())
 
@@ -267,12 +277,12 @@ test.group('Japa API Client Plugin', () => {
           ],
         })
 
-      const componentName = response.livewireComponent
+      const componentName = response.livewire().name()
       assert.equal(componentName, 'test')
     })
   })
 
-  test('assertLivewireComponent should assert component name', async ({ assert, cleanup }) => {
+  test('assertSet should assert property value', async ({ assert, cleanup }) => {
     const { app } = await setupApp()
     cleanup(() => app.terminate())
 
@@ -303,11 +313,11 @@ test.group('Japa API Client Plugin', () => {
           ],
         })
 
-      response.assertLivewireComponent('test')
+      response.livewire().assertSet('count', 0)
     })
   })
 
-  test('assertLivewireSnapshot should assert exact snapshot match', async ({ assert, cleanup }) => {
+  test('assertSnapshot should assert exact snapshot match', async ({ assert, cleanup }) => {
     const { app } = await setupApp()
     cleanup(() => app.terminate())
 
@@ -338,12 +348,13 @@ test.group('Japa API Client Plugin', () => {
           ],
         })
 
-      const snapshot = response.livewireSnapshot!
-      response.assertLivewireSnapshot(snapshot)
+      const testable = response.livewire()
+      const snapshot = testable.snapshot()
+      testable.assertSnapshot(snapshot)
     })
   })
 
-  test('assertLivewireSnapshotContains should assert partial snapshot match', async ({
+  test('assertSnapshotContains should assert partial snapshot match', async ({
     assert,
     cleanup,
   }) => {
@@ -377,14 +388,14 @@ test.group('Japa API Client Plugin', () => {
           ],
         })
 
-      const snapshot = response.livewireSnapshot!
-      response.assertLivewireSnapshotContains({
-        memo: { name: 'test', id: snapshot.memo.id },
+      const testable = response.livewire()
+      testable.assertSnapshotContains({
+        memo: { name: 'test', id: testable.id() },
       })
     })
   })
 
-  test('assertLivewireEffects should assert exact effects match', async ({ assert, cleanup }) => {
+  test('assertEffects should assert exact effects match', async ({ assert, cleanup }) => {
     const { app } = await setupApp()
     cleanup(() => app.terminate())
 
@@ -416,17 +427,14 @@ test.group('Japa API Client Plugin', () => {
           ],
         })
 
-      response.assertLivewireEffects({
+      response.livewire().assertEffects({
         html: '<div>Count: 0</div>',
         dispatches: ['test-event'],
       })
     })
   })
 
-  test('assertLivewireEffectsContains should assert partial effects match', async ({
-    assert,
-    cleanup,
-  }) => {
+  test('assertEffectsContains should assert partial effects match', async ({ assert, cleanup }) => {
     const { app } = await setupApp()
     cleanup(() => app.terminate())
 
@@ -459,9 +467,159 @@ test.group('Japa API Client Plugin', () => {
           ],
         })
 
-      response.assertLivewireEffectsContains({
+      response.livewire().assertEffectsContains({
         redirect: '/dashboard',
       })
+    })
+  })
+
+  test('assertRedirect should assert redirect effect', async ({ assert, cleanup }) => {
+    const { app } = await setupApp()
+    cleanup(() => app.terminate())
+
+    const livewire = new LivewireFactory(app).create()
+    livewire.component('test', TestComponent)
+
+    const { url } = await createLivewireUpdateServer(app, livewire, async (ctx, component) => {
+      return {
+        html: '<div>Count: 0</div>',
+        redirect: '/dashboard',
+      }
+    })
+
+    await runJapaTest(app, async ({ client }) => {
+      const response = await client
+        .post(`${url}/livewire/update`)
+        .withLivewire()
+        .json({
+          components: [
+            {
+              snapshot: JSON.stringify({
+                data: { count: 0 },
+                memo: { id: 'test-id', name: 'test' },
+                checksum: 'test-checksum',
+              }),
+              updates: {},
+              calls: [],
+            },
+          ],
+        })
+
+      response.livewire().assertRedirect('/dashboard')
+    })
+  })
+
+  test('assertDispatched should assert event was dispatched', async ({ assert, cleanup }) => {
+    const { app } = await setupApp()
+    cleanup(() => app.terminate())
+
+    const livewire = new LivewireFactory(app).create()
+    livewire.component('test', TestComponent)
+
+    const { url } = await createLivewireUpdateServer(app, livewire, async (ctx, component) => {
+      return {
+        html: '<div>Count: 0</div>',
+        dispatches: ['user-updated', 'notification-sent'],
+      }
+    })
+
+    await runJapaTest(app, async ({ client }) => {
+      const response = await client
+        .post(`${url}/livewire/update`)
+        .withLivewire()
+        .json({
+          components: [
+            {
+              snapshot: JSON.stringify({
+                data: { count: 0 },
+                memo: { id: 'test-id', name: 'test' },
+                checksum: 'test-checksum',
+              }),
+              updates: {},
+              calls: [],
+            },
+          ],
+        })
+
+      response.livewire().assertDispatched('user-updated').assertNotDispatched('error-occurred')
+    })
+  })
+
+  test('assertSee should assert HTML contains text', async ({ assert, cleanup }) => {
+    const { app } = await setupApp()
+    cleanup(() => app.terminate())
+
+    const livewire = new LivewireFactory(app).create()
+    livewire.component('test', TestComponent)
+
+    const { url } = await createLivewireUpdateServer(app, livewire, async (ctx, component) => {
+      return {
+        html: '<div>Count: 5</div>',
+      }
+    })
+
+    await runJapaTest(app, async ({ client }) => {
+      const response = await client
+        .post(`${url}/livewire/update`)
+        .withLivewire()
+        .json({
+          components: [
+            {
+              snapshot: JSON.stringify({
+                data: { count: 5 },
+                memo: { id: 'test-id', name: 'test' },
+                checksum: 'test-checksum',
+              }),
+              updates: {},
+              calls: [],
+            },
+          ],
+        })
+
+      response.livewire().assertSee('Count: 5').assertDontSee('Error')
+    })
+  })
+
+  test('chainable assertions should work', async ({ assert, cleanup }) => {
+    const { app } = await setupApp()
+    cleanup(() => app.terminate())
+
+    const livewire = new LivewireFactory(app).create()
+    livewire.component('test', TestComponent)
+
+    const { url } = await createLivewireUpdateServer(app, livewire, async (ctx, component) => {
+      return {
+        html: '<div>Count: 5</div>',
+        dispatches: ['count-updated'],
+        redirect: '/success',
+      }
+    })
+
+    await runJapaTest(app, async ({ client }) => {
+      const response = await client
+        .post(`${url}/livewire/update`)
+        .withLivewire()
+        .json({
+          components: [
+            {
+              snapshot: JSON.stringify({
+                data: { count: 5, items: [1, 2, 3] },
+                memo: { id: 'test-id', name: 'test' },
+                checksum: 'test-checksum',
+              }),
+              updates: {},
+              calls: [],
+            },
+          ],
+        })
+
+      // The server generates its own snapshot with count=0, so we check actual returned data
+      const testable = response.livewire()
+      testable
+        .assertSee('Count: 5')
+        .assertSeeHtml('<div>')
+        .assertDispatched('count-updated')
+        .assertRedirect('/success')
     })
   })
 
@@ -563,11 +721,15 @@ test.group('Japa API Client Plugin', () => {
           ],
         })
 
-      const components = response.livewireComponents
+      const testable = response.livewire()
+      const components = testable.components()
       assert.isDefined(components)
-      assert.lengthOf(components!, 2)
+      assert.lengthOf(components, 2)
       // First component should be accessible via getters
-      assert.equal(response.livewireComponent, 'test')
+      assert.equal(testable.name(), 'test')
+      // Access second component - check that it exists and has different id from first
+      const secondComponent = testable.component(1)
+      assert.notEqual(testable.id(), secondComponent.id())
     })
   })
 
@@ -592,8 +754,8 @@ test.group('Japa API Client Plugin', () => {
       const response = await client.get(`${url}/test`)
 
       try {
-        // Accessing livewireComponents should throw an error for non-Livewire responses
-        void response.livewireComponents
+        // Calling livewire() should throw an error for non-Livewire responses
+        response.livewire()
         assert.fail('Should have thrown an error')
       } catch (error: any) {
         assert.include(error.message, 'Not a Livewire response')
