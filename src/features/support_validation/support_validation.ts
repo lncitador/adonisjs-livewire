@@ -17,7 +17,7 @@ export class SupportValidation extends ComponentHook {
   /**
    * Handle hydration - restore validation errors from memo
    */
-  async callHydrate(_data: any, memo: any, _context: ComponentContext): Promise<void> {
+  async hydrate(_data: any, memo: any, _context?: ComponentContext): Promise<void> {
     if (memo?.errors) {
       const component = this.component as any
       if (typeof component.setErrorBag === 'function') {
@@ -30,25 +30,24 @@ export class SupportValidation extends ComponentHook {
    * Handle render - share errors with views
    * Returns a callback to revert the sharing after render
    */
-  async callRender(...params: any[]): Promise<(...args: any[]) => Promise<void>> {
+  async render(...params: any[]): Promise<Function | void> {
     const [view] = params
     const component = this.component as any
     if (!view || typeof view.share !== 'function') {
-      return async () => {}
+      return
     }
     const errorBag = typeof component.getErrorBag === 'function' ? component.getErrorBag() : {}
     const errors = {
       default: errorBag,
     }
     view.share({ errors })
-    return async () => {}
   }
 
   /**
    * Handle dehydration - persist validation errors to memo
    * Only persists errors that correspond to component properties
    */
-  async callDehydrate(context: ComponentContext): Promise<void> {
+  async dehydrate(context: ComponentContext): Promise<void> {
     const component = this.component as any
     const errorBag = typeof component.getErrorBag === 'function' ? component.getErrorBag() : {}
     const filteredErrors: Record<string, string[]> = {}
@@ -65,7 +64,7 @@ export class SupportValidation extends ComponentHook {
   /**
    * Handle exception - catch ValidationException and set error bag
    */
-  async callException(...params: any[]): Promise<void> {
+  async exception(...params: any[]): Promise<void> {
     const [error, stopPropagation] = params
     const isValidationError =
       error?.name === 'ValidationException' ||
