@@ -184,7 +184,7 @@ export class BaseTestable extends Macroable {
 
   #app: ApplicationService
   #ctx: HttpContext
-  #router: HttpRouterService
+  // #router: HttpRouterService
 
   #features: ComponentHook[] = []
   #mountParams: any[] = []
@@ -216,14 +216,20 @@ export class BaseTestable extends Macroable {
 
     this.#app = app
     this.#ctx = ctx
-    this.#router = router
+    // this.#router = router
 
     this.#state = new ComponentState(initialComponent, initialSnapshot)
     this.#dataStore = new DataStore(BaseTestable.#generateId())
     this.#componentContext = new ComponentContext(initialComponent)
+
+    this.#features.push(...this.#createFeatures(initialComponent))
   }
 
   static async create() {}
+
+  get mountParams() {
+    return this.#mountParams
+  }
 
   get state(): ComponentState {
     return this.#state

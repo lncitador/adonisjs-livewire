@@ -2,7 +2,7 @@ import type { Constructor } from '../../types.js'
 import type { BaseComponent } from '../../base_component.js'
 import { store } from '../../store.js'
 import type { InferInput, Infer, ConstructableSchema } from '@vinejs/vine/types'
-import type { ValidatedProperties, InferValidationReturnType } from './types.js'
+import type { InferValidationReturnType } from './types.js'
 
 /**
  * Error bag for storing validation errors

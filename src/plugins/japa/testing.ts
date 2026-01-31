@@ -2,7 +2,7 @@ import type { PluginFn } from '@japa/runner/types'
 import type { ApplicationService, HttpRouterService } from '@adonisjs/core/types'
 import type { HttpContext } from '@adonisjs/core/http'
 import type { ComponentConstructor } from '../../types.js'
-import { ComponentTest } from '../../features/support_testing/testable.js'
+import { Testable } from '../../features/support_testing/testable.js'
 import { HttpContextFactory } from '@adonisjs/http-server/factories'
 import { TestContext } from '@japa/runner/core'
 
@@ -24,7 +24,7 @@ export interface LivewireTestingHelper {
    * })
    * ```
    */
-  test(componentClass: ComponentConstructor): ComponentTest
+  test(componentClass: ComponentConstructor): Testable
 }
 
 /**
@@ -41,8 +41,8 @@ class LivewireHelper implements LivewireTestingHelper {
     this.#ctx = ctx ?? new HttpContextFactory().create()
   }
 
-  test(componentClass: ComponentConstructor): ComponentTest {
-    return new ComponentTest(componentClass, this.#app, this.#router, this.#ctx)
+  test(componentClass: ComponentConstructor): Testable {
+    return new Testable(componentClass, this.#app, this.#router, this.#ctx)
   }
 }
 
