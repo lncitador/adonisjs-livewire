@@ -7,6 +7,7 @@ import ComponentContext from '../../src/component_context.js'
 import vine from '@vinejs/vine'
 import Validator from '../../src/features/support_validation/validator.js'
 import { validator } from '../../src/decorators/index.js'
+import type { HasValidate } from '../../src/features/support_validation/types.js'
 
 /**
  * Test component for validation
@@ -537,7 +538,7 @@ test.group('Validator Decorator - Use @validator', () => {
 
     class DecoratedComponent extends Component {
       @validator(() => vine.string().minLength(3))
-      declare name: string
+      declare name: HasValidate<string>
 
       async render() {
         return Promise.resolve('<div>Decorated</div>')
@@ -561,7 +562,7 @@ test.group('Validator Decorator - Use @validator', () => {
 
     class DecoratedComponent extends Component {
       @validator(() => vine.string().email(), { onUpdate: false })
-      declare email: string
+      declare email: HasValidate<string>
 
       async render() {
         return Promise.resolve('<div>Decorated</div>')
@@ -587,13 +588,13 @@ test.group('Validator Decorator - Use @validator', () => {
 
     class DecoratedComponent extends Component {
       @validator(() => vine.string().minLength(2))
-      declare name: string
+      declare name: HasValidate<string>
 
       @validator(() => vine.string().email())
-      declare email: string
+      declare email: HasValidate<string>
 
       @validator(() => vine.number().min(18))
-      declare age: number
+      declare age: HasValidate<number>
 
       async render() {
         return Promise.resolve('<div>Decorated</div>')

@@ -10,7 +10,8 @@ import Title from '../features/support_page_components/title.js'
 import Url from '../features/support_query_string/url.js'
 import Renderless from '../features/support_renderless/renderless.js'
 import Validator from '../features/support_validation/validator.js'
-import type { ConstructableSchema } from '@vinejs/vine/types'
+import type { HasValidate } from '../features/support_validation/types.js'
+import type { ConstructableSchema, Infer } from '@vinejs/vine/types'
 
 export function title(value: string) {
   return function (constructor: typeof Component) {
@@ -121,11 +122,14 @@ export function renderless() {
  * }
  * ```
  */
-export function validator<T extends () => ConstructableSchema<any, any, any>>(
-  schemaFactory: T,
+export function validator<TSchema extends ConstructableSchema<any, any, any>>(
+  schemaFactory: () => TSchema,
   options?: { onUpdate?: boolean }
-) {
+): <TKey extends string>(
+  target: { [K in TKey]: HasValidate<Infer<TSchema>> },
+  propertyKey: TKey
+) => void {
   return function (target: Component, propertyKey: string) {
     target.addDecorator(new Validator(propertyKey, schemaFactory, options?.onUpdate ?? true))
-  } as (target: Component, propertyKey: string) => void
+  } as any
 }

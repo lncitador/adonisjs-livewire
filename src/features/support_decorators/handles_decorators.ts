@@ -17,10 +17,12 @@ export function HandlesDecorators<T extends Constructor<BaseComponent>>(Base: T)
     getDecorators(): Decorator[] {
       // Get prototype decorators (set by @computed, @on, etc. decorators)
       // Only get decorators defined on this specific class, not inherited
-      const prototypeDecorators: Decorator[] =
-        Object.hasOwn(this.constructor.prototype, DECORATORS_KEY)
-          ? (this.constructor.prototype as any)[DECORATORS_KEY]
-          : []
+      const prototypeDecorators: Decorator[] = Object.hasOwn(
+        this.constructor.prototype,
+        DECORATORS_KEY
+      )
+        ? (this.constructor.prototype as any)[DECORATORS_KEY]
+        : []
 
       // Get instance decorators (added at runtime via addDecorator)
       const instanceDecorators: Decorator[] = (this as any)[INSTANCE_DECORATORS_KEY] || []
@@ -44,9 +46,9 @@ export function HandlesDecorators<T extends Constructor<BaseComponent>>(Base: T)
       } else {
         // Called on instance, store on instance
         if (!(this as any)[INSTANCE_DECORATORS_KEY]) {
-          (this as any)[INSTANCE_DECORATORS_KEY] = []
+          ;(this as any)[INSTANCE_DECORATORS_KEY] = []
         }
-        (this as any)[INSTANCE_DECORATORS_KEY].push(decorator)
+        ;(this as any)[INSTANCE_DECORATORS_KEY].push(decorator)
       }
     }
   }
