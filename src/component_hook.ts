@@ -2,6 +2,7 @@ import type { ApplicationService } from '@adonisjs/core/types'
 import ComponentContext from './component_context.js'
 import { store } from './store.js'
 import { Component } from './component.js'
+import debug from './debug.js'
 
 /**
  * Base class for all Livewire features (hooks)
@@ -36,6 +37,11 @@ export default abstract class ComponentHook {
    */
   async callBoot(...params: any[]) {
     if (typeof this.boot === 'function') {
+      debug(
+        'callBoot: %s on component=%s',
+        this.constructor.name,
+        this.component?.getName?.() ?? 'unknown'
+      )
       await this.boot(...params)
     }
   }
@@ -45,6 +51,11 @@ export default abstract class ComponentHook {
    */
   async callMount(...params: any[]) {
     if (typeof this.mount === 'function') {
+      debug(
+        'callMount: %s on component=%s',
+        this.constructor.name,
+        this.component?.getName?.() ?? 'unknown'
+      )
       await this.mount(...params)
     }
   }
@@ -54,6 +65,11 @@ export default abstract class ComponentHook {
    */
   async callHydrate(...params: any[]) {
     if (typeof this.hydrate === 'function') {
+      debug(
+        'callHydrate: %s on component=%s',
+        this.constructor.name,
+        this.component?.getName?.() ?? 'unknown'
+      )
       await this.hydrate(...params)
     }
   }
@@ -62,6 +78,7 @@ export default abstract class ComponentHook {
    * Call the update lifecycle hook if it exists
    */
   async callUpdate(propertyName: string, fullPath: string, newValue: any) {
+    debug('callUpdate: %s property=%s path=%s', this.constructor.name, propertyName, fullPath)
     const callbacks: Function[] = []
     if (typeof this.update === 'function') {
       const callback = await this.update(propertyName, fullPath, newValue)
@@ -93,6 +110,12 @@ export default abstract class ComponentHook {
     metadata?: any,
     componentContext?: ComponentContext
   ): Promise<any> {
+    debug(
+      'callCall: %s method=%s on component=%s',
+      this.constructor.name,
+      method,
+      this.component?.getName?.() ?? 'unknown'
+    )
     const callbacks: any[] = []
     if (typeof this.call === 'function') {
       const result = await this.call(method, params, returnEarly, metadata, componentContext)
@@ -113,6 +136,11 @@ export default abstract class ComponentHook {
    * Call the render lifecycle hook if it exists
    */
   async callRender(...params: any[]) {
+    debug(
+      'callRender: %s on component=%s',
+      this.constructor.name,
+      this.component?.getName?.() ?? 'unknown'
+    )
     const callbacks: Function[] = []
     if (typeof this.render === 'function') {
       const callback = await this.render(...params)
@@ -134,6 +162,11 @@ export default abstract class ComponentHook {
    * PHP parity: callRenderIsland
    */
   async callRenderIsland(...params: any[]) {
+    debug(
+      'callRenderIsland: %s on component=%s',
+      this.constructor.name,
+      this.component?.getName?.() ?? 'unknown'
+    )
     const callbacks: Function[] = []
     if (typeof this.renderIsland === 'function') {
       const callback = await this.renderIsland(...params)
@@ -155,6 +188,11 @@ export default abstract class ComponentHook {
    */
   async callDehydrate(...params: any[]) {
     if (typeof this.dehydrate === 'function') {
+      debug(
+        'callDehydrate: %s on component=%s',
+        this.constructor.name,
+        this.component?.getName?.() ?? 'unknown'
+      )
       await this.dehydrate(...params)
     }
   }
@@ -164,6 +202,11 @@ export default abstract class ComponentHook {
    */
   async callDestroy(...params: any[]) {
     if (typeof this.destroy === 'function') {
+      debug(
+        'callDestroy: %s on component=%s',
+        this.constructor.name,
+        this.component?.getName?.() ?? 'unknown'
+      )
       await this.destroy(...params)
     }
   }
@@ -173,6 +216,12 @@ export default abstract class ComponentHook {
    */
   async callException(...params: any[]) {
     if (typeof this.exception === 'function') {
+      debug(
+        'callException: %s on component=%s error=%O',
+        this.constructor.name,
+        this.component?.getName?.() ?? 'unknown',
+        params[0]
+      )
       await this.exception(...params)
     }
   }

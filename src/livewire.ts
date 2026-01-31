@@ -71,6 +71,7 @@ export default class Livewire {
   }
 
   async trigger(event: string, component: Component, ...params: any[]) {
+    debug('trigger: event=%s component=%s', event, component.getName())
     const context = getLivewireContext()
     if (!context) return []
 
@@ -329,8 +330,9 @@ export default class Livewire {
   }
 
   async fromSnapshot(ctx: HttpContext, snapshot: ComponentSnapshot) {
-    debug('restoring component from snapshot %s', snapshot.memo.name)
+    debug('fromSnapshot: restoring component=%s id=%s', snapshot.memo.name, snapshot.memo.id)
     this.checksum.verify(snapshot)
+    debug('fromSnapshot: checksum verified for %s', snapshot.memo.name)
 
     const router = await this.app.container.make('router')
     const path = snapshot.memo.path
@@ -361,9 +363,11 @@ export default class Livewire {
   }
 
   async new(ctx: HttpContext, name: string, id: string | null = null) {
+    debug('new: creating component=%s id=%s', name, id || 'auto-generated')
     let LivewireComponent: ComponentConstructor
 
     if (this.components.has(name)) {
+      debug('new: found cached component class for %s', name)
       LivewireComponent = this.components.get(name)!
     } else {
       let jsPath = name
@@ -435,6 +439,7 @@ export default class Livewire {
       id: componentId,
       name,
     })
+    debug('new: instantiated component=%s with id=%s', name, componentId)
 
     let viewPath = name
       .split('.')
@@ -578,12 +583,14 @@ export default class Livewire {
     calls: ComponentCall[],
     context: ComponentContext
   ): Promise<any[]> {
+    debug('callMethods: executing %d calls on component=%s', calls.length, component.getName())
     let returns: any[] = []
 
     for (const call of calls) {
       try {
         let method = call['method']
         let params = call['params']
+        debug('callMethods: executing method=%s with params=%O', method, params)
 
         // let methods = getPublicMethods(component)
         // methods = methods.filter((m) => m !== 'render')
@@ -625,6 +632,7 @@ export default class Livewire {
           returns.push(result)
         }
       } catch (error) {
+        debug('callMethods: ERROR in method=%s error=%O', call['method'], error)
         console.error(error)
         if ((error as any).code === 'E_VALIDATION_ERROR') {
           //@ts-ignore

@@ -184,6 +184,7 @@ export default class LivewireProvider {
   }
 
   async register() {
+    debug('registering Livewire provider')
     const Livewire = await import('../src/livewire.js').then((m) => m.default)
 
     const FEATURES = [
@@ -198,6 +199,7 @@ export default class LivewireProvider {
     ]
 
     for (const feature of FEATURES) {
+      debug('registering feature: %s', feature.name)
       Livewire.componentHook(feature)
 
       //@ts-ignore
@@ -207,6 +209,7 @@ export default class LivewireProvider {
       }
     }
 
+    debug('registering property synthesizers: ModelSynth, ArraySynth')
     Livewire.registerPropertySynthesizer([ModelSynth, ArraySynth])
   }
 }
