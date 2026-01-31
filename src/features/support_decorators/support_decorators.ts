@@ -3,7 +3,7 @@ import ComponentHook from '../../component_hook.js'
 export class SupportDecorators extends ComponentHook {
   async boot(...params: any[]) {
     for (const decorator of this.component.getDecorators()) {
-      decorator.boot(this.component)
+      decorator.__boot(this.component)
 
       if (typeof decorator['boot'] !== 'function') continue
 
@@ -19,12 +19,12 @@ export class SupportDecorators extends ComponentHook {
     }
   }
 
-  async update(_propertyName: string, fullPath: string, newValue: any): Promise<Function> {
+  async update(propertyName: string, fullPath: string, newValue: any): Promise<Function> {
     const decorators = this.component.getDecorators()
 
     const callbacks = decorators.map(async (decorator) => {
       if (typeof decorator['update'] === 'function') {
-        return await decorator['update'](fullPath, newValue)
+        return await decorator['update'](propertyName, fullPath, newValue)
       }
     })
 
