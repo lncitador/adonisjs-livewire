@@ -256,6 +256,7 @@ test.group('Computed Decorator - Use @computed', () => {
       firstName = 'John'
       lastName = 'Doe'
 
+      @computed()
       async fullName() {
         return `${this.firstName} ${this.lastName}`
       }
@@ -264,14 +265,6 @@ test.group('Computed Decorator - Use @computed', () => {
         return Promise.resolve('<div>Decorated</div>')
       }
     }
-
-    // Simulate @computed decorator application
-    const computedDecorator = computed()
-    computedDecorator(
-      DecoratedComponent.prototype,
-      'fullName',
-      Object.getOwnPropertyDescriptor(DecoratedComponent.prototype, 'fullName')!
-    )
 
     const ctx = new HttpContextFactory().create()
     const component = new DecoratedComponent({ ctx, app, router, id: 'test-id', name: 'test' })
@@ -289,6 +282,7 @@ test.group('Computed Decorator - Use @computed', () => {
     cleanup(() => app.terminate())
 
     class DecoratedComponent extends Component {
+      @computed('total')
       async calculateTotal() {
         return 100
       }
@@ -297,14 +291,6 @@ test.group('Computed Decorator - Use @computed', () => {
         return Promise.resolve('<div>Decorated</div>')
       }
     }
-
-    // @computed('total') - custom name
-    const computedDecorator = computed('total')
-    computedDecorator(
-      DecoratedComponent.prototype,
-      'calculateTotal',
-      Object.getOwnPropertyDescriptor(DecoratedComponent.prototype, 'calculateTotal')!
-    )
 
     const ctx = new HttpContextFactory().create()
     const component = new DecoratedComponent({ ctx, app, router, id: 'test-id', name: 'test' })
@@ -321,7 +307,9 @@ test.group('Computed Decorator - Use @computed', () => {
     cleanup(() => app.terminate())
 
     let callCount = 0
+
     class DecoratedComponent extends Component {
+      @computed()
       async expensiveComputation() {
         callCount++
         return 'result'
@@ -331,12 +319,6 @@ test.group('Computed Decorator - Use @computed', () => {
         return Promise.resolve('<div>Decorated</div>')
       }
     }
-
-    computed()(
-      DecoratedComponent.prototype,
-      'expensiveComputation',
-      Object.getOwnPropertyDescriptor(DecoratedComponent.prototype, 'expensiveComputation')!
-    )
 
     const ctx = new HttpContextFactory().create()
     const component = new DecoratedComponent({ ctx, app, router, id: 'test-id', name: 'test' })
@@ -364,6 +346,7 @@ test.group('Computed Decorator - Use @computed', () => {
     class DecoratedComponent extends Component {
       items = [1, 2, 3, 4, 5]
 
+      @computed()
       async itemCount() {
         return this.items.length
       }
@@ -372,12 +355,6 @@ test.group('Computed Decorator - Use @computed', () => {
         return Promise.resolve('<div>Decorated</div>')
       }
     }
-
-    computed()(
-      DecoratedComponent.prototype,
-      'itemCount',
-      Object.getOwnPropertyDescriptor(DecoratedComponent.prototype, 'itemCount')!
-    )
 
     const ctx = new HttpContextFactory().create()
     const component = new DecoratedComponent({ ctx, app, router, id: 'test-id', name: 'test' })
@@ -409,10 +386,12 @@ test.group('Computed Decorator - Use @computed', () => {
       lastName = 'Doe'
       items = [1, 2, 3]
 
+      @computed()
       async fullName() {
         return `${this.firstName} ${this.lastName}`
       }
 
+      @computed()
       async itemCount() {
         return this.items.length
       }
@@ -421,17 +400,6 @@ test.group('Computed Decorator - Use @computed', () => {
         return Promise.resolve('<div>Decorated</div>')
       }
     }
-
-    computed()(
-      DecoratedComponent.prototype,
-      'fullName',
-      Object.getOwnPropertyDescriptor(DecoratedComponent.prototype, 'fullName')!
-    )
-    computed()(
-      DecoratedComponent.prototype,
-      'itemCount',
-      Object.getOwnPropertyDescriptor(DecoratedComponent.prototype, 'itemCount')!
-    )
 
     const ctx = new HttpContextFactory().create()
     const component = new DecoratedComponent({ ctx, app, router, id: 'test-id', name: 'test' })

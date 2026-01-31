@@ -225,8 +225,8 @@ test.group('On Decorator - Use @on', () => {
     const { app, router } = await setupApp()
     cleanup(() => app.terminate())
 
-    // Component with @on decorator
     class DecoratedComponent extends Component {
+      @on('user-created')
       handleUserCreated() {
         // handler method
       }
@@ -235,10 +235,6 @@ test.group('On Decorator - Use @on', () => {
         return Promise.resolve('<div>Decorated</div>')
       }
     }
-
-    // Simulate decorator application
-    const onDecorator = on('user-created')
-    onDecorator(DecoratedComponent.prototype, 'handleUserCreated')
 
     const ctx = new HttpContextFactory().create()
     const component = new DecoratedComponent({ ctx, app, router, id: 'test-id', name: 'test' })
@@ -273,6 +269,7 @@ test.group('On Decorator - Use @on', () => {
     cleanup(() => app.terminate())
 
     class DecoratedComponent extends Component {
+      @on()
       onUserDeleted() {
         // handler
       }
@@ -281,10 +278,6 @@ test.group('On Decorator - Use @on', () => {
         return Promise.resolve('<div>Decorated</div>')
       }
     }
-
-    // @on() without name uses method name
-    const onDecorator = on()
-    onDecorator(DecoratedComponent.prototype, 'onUserDeleted')
 
     const ctx = new HttpContextFactory().create()
     const component = new DecoratedComponent({ ctx, app, router, id: 'test-id', name: 'test' })

@@ -536,16 +536,13 @@ test.group('Validator Decorator - Use @validator', () => {
     cleanup(() => app.terminate())
 
     class DecoratedComponent extends Component {
+      @validator(() => vine.string().minLength(3))
       declare name: string
 
       async render() {
         return Promise.resolve('<div>Decorated</div>')
       }
     }
-
-    // Simulate @validator decorator application
-    const validatorDecorator = validator(() => vine.string().minLength(3))
-    validatorDecorator(DecoratedComponent.prototype, 'name')
 
     const ctx = new HttpContextFactory().create()
     const component = new DecoratedComponent({ ctx, app, router, id: 'test-id', name: 'test' })
@@ -563,16 +560,13 @@ test.group('Validator Decorator - Use @validator', () => {
     cleanup(() => app.terminate())
 
     class DecoratedComponent extends Component {
+      @validator(() => vine.string().email(), { onUpdate: false })
       declare email: string
 
       async render() {
         return Promise.resolve('<div>Decorated</div>')
       }
     }
-
-    // @validator with onUpdate: false
-    const validatorDecorator = validator(() => vine.string().email(), { onUpdate: false })
-    validatorDecorator(DecoratedComponent.prototype, 'email')
 
     const ctx = new HttpContextFactory().create()
     const component = new DecoratedComponent({ ctx, app, router, id: 'test-id', name: 'test' })
@@ -592,18 +586,19 @@ test.group('Validator Decorator - Use @validator', () => {
     cleanup(() => app.terminate())
 
     class DecoratedComponent extends Component {
+      @validator(() => vine.string().minLength(2))
       declare name: string
+
+      @validator(() => vine.string().email())
       declare email: string
+
+      @validator(() => vine.number().min(18))
       declare age: number
 
       async render() {
         return Promise.resolve('<div>Decorated</div>')
       }
     }
-
-    validator(() => vine.string().minLength(2))(DecoratedComponent.prototype, 'name')
-    validator(() => vine.string().email())(DecoratedComponent.prototype, 'email')
-    validator(() => vine.number().min(18))(DecoratedComponent.prototype, 'age')
 
     const ctx = new HttpContextFactory().create()
     const component = new DecoratedComponent({ ctx, app, router, id: 'test-id', name: 'test' })
