@@ -88,10 +88,36 @@ class TestHook extends ComponentHook {
   }
 }
 
+// Test class with renderIsland
+class RenderIslandHook extends ComponentHook {
+  renderIslandCalled = false
+  renderIslandParams: any[] = []
+  renderIslandCallback: Function | undefined = undefined
+
+  async renderIsland(...params: any[]): Promise<Function | void> {
+    this.renderIslandCalled = true
+    this.renderIslandParams = params
+    return this.renderIslandCallback
+  }
+}
+
 // Test class without hooks
 class EmptyHook extends ComponentHook {}
 
 class TestComponent extends Component {
+  constructor() {
+    super({} as any)
+  }
+}
+
+// Test component with properties
+class ComponentWithProperties extends Component {
+  name = 'John'
+  age = 30
+  user = { name: 'Jane', email: 'jane@example.com' }
+  items = ['a', 'b', 'c']
+  _internal = 'should be ignored'
+
   constructor() {
     super({} as any)
   }
@@ -425,19 +451,91 @@ test.group('ComponentHook', () => {
     })
   })
 
-  test('getProperties should return undefined by default', async ({ assert }) => {
+  test('getProperties should return empty object when no component is set', async ({ assert }) => {
     const hook = new EmptyHook()
 
     const result = hook.getProperties()
 
-    assert.isUndefined(result)
+    assert.deepEqual(result, {})
   })
 
-  test('getProperty should return undefined when properties are undefined', async ({ assert }) => {
+  test('getProperty should return undefined when properties are empty', async ({ assert }) => {
     const hook = new EmptyHook()
 
     const result = hook.getProperty('someKey')
 
     assert.isUndefined(result)
+  })
+
+  test('getProperties should return component properties', async ({ assert }) => {
+    const hook = new EmptyHook()
+    const component = new ComponentWithProperties()
+    hook.setComponent(component)
+
+    const result = hook.getProperties()
+
+    assert.equal(result.name, 'John')
+    assert.equal(result.age, 30)
+    assert.deepEqual(result.user, { name: 'Jane', email: 'jane@example.com' })
+    assert.deepEqual(result.items, ['a', 'b', 'c'])
+    // Should not include internal properties
+    assert.isUndefined(result._internal)
+  })
+
+  test('getProperty should return property value', async ({ assert }) => {
+    const hook = new EmptyHook()
+    const component = new ComponentWithProperties()
+    hook.setComponent(component)
+
+    assert.equal(hook.getProperty('name'), 'John')
+    assert.equal(hook.getProperty('age'), 30)
+  })
+
+  test('getProperty should support dot notation (PHP parity: data_get)', async ({ assert }) => {
+    const hook = new EmptyHook()
+    const component = new ComponentWithProperties()
+    hook.setComponent(component)
+
+    assert.equal(hook.getProperty('user.name'), 'Jane')
+    assert.equal(hook.getProperty('user.email'), 'jane@example.com')
+  })
+
+  test('getProperty should return undefined for non-existent nested path', async ({ assert }) => {
+    const hook = new EmptyHook()
+    const component = new ComponentWithProperties()
+    hook.setComponent(component)
+
+    assert.isUndefined(hook.getProperty('user.nonexistent'))
+    assert.isUndefined(hook.getProperty('nonexistent.path'))
+  })
+
+  test('callRenderIsland should call renderIsland hook and return callback executor', async ({
+    assert,
+  }) => {
+    const hook = new RenderIslandHook()
+    let callbackExecuted = false
+    hook.renderIslandCallback = () => {
+      callbackExecuted = true
+    }
+
+    const finish = await hook.callRenderIsland('param1', 'param2')
+
+    assert.isTrue(hook.renderIslandCalled)
+    assert.deepEqual(hook.renderIslandParams, ['param1', 'param2'])
+
+    await finish()
+
+    assert.isTrue(callbackExecuted)
+  })
+
+  test('callRenderIsland should not throw when renderIsland hook does not exist', async ({
+    assert,
+  }) => {
+    const hook = new EmptyHook()
+
+    const finish = await hook.callRenderIsland('param1')
+
+    assert.isFunction(finish)
+    await finish() // Should not throw
   })
 })

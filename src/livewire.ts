@@ -101,10 +101,21 @@ export default class Livewire {
       } else if (event === 'update') {
         await feature.callUpdate(params[0], params[1], params[2])
       } else if (event === 'call') {
-        const callback = await feature.callCall(params[0], params[1], params[3])
+        // params = [method, methodParams, componentContext, returnEarly]
+        const callback = await feature.callCall(
+          params[0], // method
+          params[1], // params
+          params[3], // returnEarly
+          undefined, // metadata (not used currently)
+          params[2] // componentContext
+        )
         if (callback) {
           callbacks.push(callback)
         }
+      } else if (event === 'destroy') {
+        await feature.callDestroy(...params)
+      } else if (event === 'exception') {
+        await feature.callException(...params)
       }
     }
 

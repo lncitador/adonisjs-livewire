@@ -130,6 +130,27 @@ export default abstract class ComponentHook {
   }
 
   /**
+   * Call the renderIsland lifecycle hook if it exists
+   * PHP parity: callRenderIsland
+   */
+  async callRenderIsland(...params: any[]) {
+    const callbacks: Function[] = []
+    if (typeof this.renderIsland === 'function') {
+      const callback = await this.renderIsland(...params)
+      if (callback) {
+        callbacks.push(callback)
+      }
+    }
+    return async (...args: any[]) => {
+      for (const callback of callbacks) {
+        if (typeof callback === 'function') {
+          await callback(...args)
+        }
+      }
+    }
+  }
+
+  /**
    * Call the dehydrate lifecycle hook if it exists
    */
   async callDehydrate(...params: any[]) {
@@ -158,16 +179,45 @@ export default abstract class ComponentHook {
 
   /**
    * Get all properties from the component
+   * PHP parity: returns $this->component->all()
    */
-  getProperties(): Record<string, any> | undefined {
-    return undefined
+  getProperties(): Record<string, any> {
+    if (!this.component) return {}
+
+    // Get all public properties from the component (excluding internal ones)
+    const data: Record<string, any> = {}
+    const ownKeys = Object.keys(this.component)
+
+    for (const key of ownKeys) {
+      // Skip internal properties (starting with _ or #)
+      if (key.startsWith('_') || key.startsWith('#')) continue
+      // Skip functions
+      if (typeof (this.component as any)[key] === 'function') continue
+      data[key] = (this.component as any)[key]
+    }
+
+    return data
   }
 
   /**
    * Get a specific property from the component
+   * Supports dot notation for nested properties (PHP parity: data_get)
+   * @param name - Property name, supports dot notation (e.g., 'user.name')
    */
   getProperty(name: string): any {
-    return this.getProperties()?.[name]
+    const properties = this.getProperties()
+    if (!properties) return undefined
+
+    // Support dot notation like PHP's data_get
+    const parts = name.split('.')
+    let value: any = properties
+
+    for (const part of parts) {
+      if (value === null || value === undefined) return undefined
+      value = value[part]
+    }
+
+    return value
   }
 
   /**
@@ -276,4 +326,12 @@ export default abstract class ComponentHook {
    * @returns Optional callback function to execute after rendering
    */
   render?(...params: any[]): Promise<Function | void>
+
+  /**
+   * Optional renderIsland lifecycle hook
+   * Called when rendering an island component
+   * PHP parity: renderIsland
+   * @returns Optional callback function to execute after rendering
+   */
+  renderIsland?(...params: any[]): Promise<Function | void>
 }
