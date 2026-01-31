@@ -1,9 +1,9 @@
-import { test } from '@japa/runner'
 import { HttpContextFactory } from '@adonisjs/core/factories/http'
-import { setupApp } from '../helpers.js'
+import { test } from '@japa/runner'
 import { Component } from '../../src/component.js'
-import Locked from '../../src/features/support_locked_properties/locked.js'
 import { CannotUpdateLockedPropertyException } from '../../src/features/support_locked_properties/cannot_update_locked_property_exception.js'
+import Locked from '../../src/features/support_locked_properties/locked.js'
+import { setupApp } from '../helpers.js'
 
 class LockedTestComponent extends Component {
   lockedProperty = 'initial'
@@ -27,11 +27,12 @@ test.group('Locked Decorator', () => {
     const component = new LockedTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const decorator = new Locked('lockedProperty')
-    decorator.boot(component)
+    decorator.__boot(component)
 
-    assert.throws(() => {
-      decorator.update('lockedProperty')
-    }, 'Cannot update locked property: [lockedProperty]')
+    assert.rejects(
+      () => decorator.update('lockedProperty'),
+      'Cannot update locked property: [lockedProperty]'
+    )
   })
 
   test('should not throw when different property is updated', async ({ assert }) => {
@@ -40,11 +41,9 @@ test.group('Locked Decorator', () => {
     const component = new LockedTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const decorator = new Locked('lockedProperty')
-    decorator.boot(component)
+    decorator.__boot(component)
 
-    assert.doesNotThrow(() => {
-      decorator.update('otherProperty')
-    })
+    assert.doesNotReject(() => decorator.update('otherProperty'))
   })
 
   test('should not throw when property name does not match', async ({ assert }) => {
@@ -53,11 +52,9 @@ test.group('Locked Decorator', () => {
     const component = new LockedTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const decorator = new Locked('count')
-    decorator.boot(component)
+    decorator.__boot(component)
 
-    assert.doesNotThrow(() => {
-      decorator.update('lockedProperty')
-    })
+    assert.doesNotReject(() => decorator.update('lockedProperty'))
   })
 
   test('should throw when deeply updating locked property (PHP parity)', async ({ assert }) => {
@@ -66,12 +63,10 @@ test.group('Locked Decorator', () => {
     const component = new LockedTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const decorator = new Locked('lockedProperty')
-    decorator.boot(component)
+    decorator.__boot(component)
 
-    assert.throws(
-      () => {
-        decorator.update('lockedProperty.nested.key')
-      },
+    assert.rejects(
+      () => decorator.update('lockedProperty', 'lockedProperty.nested.key'),
       'Cannot update locked property: [lockedProperty]'
     )
   })
@@ -84,11 +79,9 @@ test.group('Locked Decorator', () => {
     const component = new LockedTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
     const decorator = new Locked('count')
-    decorator.boot(component)
+    decorator.__boot(component)
 
-    assert.doesNotThrow(() => {
-      decorator.update('count2')
-    })
+    assert.doesNotReject(() => decorator.update('count2'))
   })
 })
 

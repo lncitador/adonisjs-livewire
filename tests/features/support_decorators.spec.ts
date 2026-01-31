@@ -45,9 +45,9 @@ class TestDecorator1 extends Decorator {
     this.mountParams = params
   }
 
-  async update(fullPath: string, newValue: any) {
+  async update(propertyName: string, _fullPath: string, newValue: any) {
     this.updateCalled = true
-    this.updateParams = [fullPath, newValue]
+    this.updateParams = [propertyName, newValue]
     return async () => {
       // Callback
     }
@@ -90,8 +90,7 @@ class TestDecorator1 extends Decorator {
 class TestDecorator2 extends Decorator {
   bootCalled = false
 
-  async boot(component: Component) {
-    super.boot(component)
+  async boot() {
     this.bootCalled = true
   }
 }
@@ -163,7 +162,7 @@ test.group('SupportDecorators', () => {
         const decorator1 = new TestDecorator1()
         const decorator2 = new TestDecorator2()
         decorator1.boot(component)
-        decorator2.boot(component)
+        decorator2.boot()
         component.addDecorator(decorator1)
         component.addDecorator(decorator2)
 
@@ -199,7 +198,7 @@ test.group('SupportDecorators', () => {
         const decorator1 = new TestDecorator1()
         const decorator2 = new TestDecorator2() // No mount method
         decorator1.boot(component)
-        decorator2.boot(component)
+        decorator2.boot()
         component.addDecorator(decorator1)
         component.addDecorator(decorator2)
 
@@ -496,7 +495,7 @@ test.group('SupportDecorators', () => {
       { dataStore, context: componentContext, features: [], ctx },
       async () => {
         const decorator = new TestDecorator2() // Only has boot
-        decorator.boot(component)
+        decorator.boot()
         component.addDecorator(decorator)
 
         const hook = new SupportDecorators()

@@ -1,9 +1,9 @@
 import { test } from '@japa/runner'
 import ComponentHook from '../src/component_hook.js'
-import { BaseComponent } from '../src/base_component.js'
 import ComponentContext from '../src/component_context.js'
 import { setupApp } from './helpers.js'
 import { DataStore, livewireContext } from '../src/store.js'
+import { Component } from '../src/component.js'
 
 // Test class that extends ComponentHook
 class TestHook extends ComponentHook {
@@ -91,10 +91,16 @@ class TestHook extends ComponentHook {
 // Test class without hooks
 class EmptyHook extends ComponentHook {}
 
+class TestComponent extends Component {
+  constructor() {
+    super({} as any)
+  }
+}
+
 test.group('ComponentHook', () => {
   test('should set component', async ({ assert }) => {
     const hook = new TestHook()
-    const component = new BaseComponent()
+    const component = new TestComponent()
     component.__id = 'comp-1'
     component.__name = 'TestComponent'
 
@@ -114,7 +120,7 @@ test.group('ComponentHook', () => {
 
   test('should call boot hook if exists', async ({ assert }) => {
     const hook = new TestHook()
-    const component = new BaseComponent()
+    const component = new TestComponent()
     component.__id = 'comp-1'
     component.__name = 'TestComponent'
     hook.setComponent(component)
@@ -127,7 +133,7 @@ test.group('ComponentHook', () => {
 
   test('should not throw when boot hook does not exist', async ({ assert }) => {
     const hook = new EmptyHook()
-    const component = new BaseComponent()
+    const component = new TestComponent()
     component.__id = 'comp-1'
     component.__name = 'TestComponent'
     hook.setComponent(component)
@@ -139,7 +145,7 @@ test.group('ComponentHook', () => {
 
   test('should call mount hook if exists', async ({ assert }) => {
     const hook = new TestHook()
-    const component = new BaseComponent()
+    const component = new TestComponent()
     component.__id = 'comp-1'
     component.__name = 'TestComponent'
     hook.setComponent(component)
@@ -152,7 +158,7 @@ test.group('ComponentHook', () => {
 
   test('should not throw when mount hook does not exist', async ({ assert }) => {
     const hook = new EmptyHook()
-    const component = new BaseComponent()
+    const component = new TestComponent()
     component.__id = 'comp-1'
     component.__name = 'TestComponent'
     hook.setComponent(component)
@@ -164,7 +170,7 @@ test.group('ComponentHook', () => {
 
   test('should call hydrate hook if exists', async ({ assert }) => {
     const hook = new TestHook()
-    const component = new BaseComponent()
+    const component = new TestComponent()
     component.__id = 'comp-1'
     component.__name = 'TestComponent'
     hook.setComponent(component)
@@ -177,7 +183,7 @@ test.group('ComponentHook', () => {
 
   test('should not throw when hydrate hook does not exist', async ({ assert }) => {
     const hook = new EmptyHook()
-    const component = new BaseComponent()
+    const component = new TestComponent()
     component.__id = 'comp-1'
     component.__name = 'TestComponent'
     hook.setComponent(component)
@@ -189,7 +195,7 @@ test.group('ComponentHook', () => {
 
   test('should call update hook and return callback executor', async ({ assert }) => {
     const hook = new TestHook()
-    const component = new BaseComponent()
+    const component = new TestComponent()
     component.__id = 'comp-1'
     component.__name = 'TestComponent'
     hook.setComponent(component)
@@ -207,7 +213,7 @@ test.group('ComponentHook', () => {
 
   test('should not throw when update hook does not exist', async ({ assert }) => {
     const hook = new EmptyHook()
-    const component = new BaseComponent()
+    const component = new TestComponent()
     component.__id = 'comp-1'
     component.__name = 'TestComponent'
     hook.setComponent(component)
@@ -222,7 +228,7 @@ test.group('ComponentHook', () => {
 
   test('should call call hook and return callback executor', async ({ assert }) => {
     const hook = new TestHook()
-    const component = new BaseComponent()
+    const component = new TestComponent()
     component.__id = 'comp-1'
     component.__name = 'TestComponent'
     hook.setComponent(component)
@@ -252,7 +258,7 @@ test.group('ComponentHook', () => {
 
   test('should not throw when call hook does not exist', async ({ assert }) => {
     const hook = new EmptyHook()
-    const component = new BaseComponent()
+    const component = new TestComponent()
     component.__id = 'comp-1'
     component.__name = 'TestComponent'
     hook.setComponent(component)
@@ -267,7 +273,7 @@ test.group('ComponentHook', () => {
 
   test('should call render hook and return callback executor', async ({ assert }) => {
     const hook = new TestHook()
-    const component = new BaseComponent()
+    const component = new TestComponent()
     component.__id = 'comp-1'
     component.__name = 'TestComponent'
     hook.setComponent(component)
@@ -285,7 +291,7 @@ test.group('ComponentHook', () => {
 
   test('should not throw when render hook does not exist', async ({ assert }) => {
     const hook = new EmptyHook()
-    const component = new BaseComponent()
+    const component = new TestComponent()
     component.__id = 'comp-1'
     component.__name = 'TestComponent'
     hook.setComponent(component)
@@ -300,7 +306,7 @@ test.group('ComponentHook', () => {
 
   test('should call dehydrate hook if exists', async ({ assert }) => {
     const hook = new TestHook()
-    const component = new BaseComponent()
+    const component = new TestComponent()
     component.__id = 'comp-1'
     component.__name = 'TestComponent'
     hook.setComponent(component)
@@ -313,7 +319,7 @@ test.group('ComponentHook', () => {
 
   test('should not throw when dehydrate hook does not exist', async ({ assert }) => {
     const hook = new EmptyHook()
-    const component = new BaseComponent()
+    const component = new TestComponent()
     component.__id = 'comp-1'
     component.__name = 'TestComponent'
     hook.setComponent(component)
@@ -325,7 +331,7 @@ test.group('ComponentHook', () => {
 
   test('should call destroy hook if exists', async ({ assert }) => {
     const hook = new TestHook()
-    const component = new BaseComponent()
+    const component = new TestComponent()
     component.__id = 'comp-1'
     component.__name = 'TestComponent'
     hook.setComponent(component)
@@ -338,7 +344,7 @@ test.group('ComponentHook', () => {
 
   test('should not throw when destroy hook does not exist', async ({ assert }) => {
     const hook = new EmptyHook()
-    const component = new BaseComponent()
+    const component = new TestComponent()
     component.__id = 'comp-1'
     component.__name = 'TestComponent'
     hook.setComponent(component)
@@ -350,7 +356,7 @@ test.group('ComponentHook', () => {
 
   test('should call exception hook if exists', async ({ assert }) => {
     const hook = new TestHook()
-    const component = new BaseComponent()
+    const component = new TestComponent()
     component.__id = 'comp-1'
     component.__name = 'TestComponent'
     hook.setComponent(component)
@@ -363,7 +369,7 @@ test.group('ComponentHook', () => {
 
   test('should not throw when exception hook does not exist', async ({ assert }) => {
     const hook = new EmptyHook()
-    const component = new BaseComponent()
+    const component = new TestComponent()
     component.__id = 'comp-1'
     component.__name = 'TestComponent'
     hook.setComponent(component)
@@ -376,7 +382,7 @@ test.group('ComponentHook', () => {
   test('should execute multiple callbacks from update hook', async ({ assert }) => {
     const hook1 = new TestHook()
     const hook2 = new TestHook()
-    const component = new BaseComponent()
+    const component = new TestComponent()
     component.__id = 'comp-1'
     component.__name = 'TestComponent'
     hook1.setComponent(component)
@@ -398,7 +404,7 @@ test.group('ComponentHook', () => {
   test('should use store methods', async ({ assert }) => {
     const { app } = await setupApp()
     const hook = new TestHook()
-    const component = new BaseComponent()
+    const component = new TestComponent()
     component.__id = 'comp-1'
     component.__name = 'TestComponent'
     hook.setComponent(component)

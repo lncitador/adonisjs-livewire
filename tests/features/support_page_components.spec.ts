@@ -76,7 +76,7 @@ test.group('Layout Decorator', () => {
       { dataStore, context: componentContext, features: [], ctx },
       async () => {
         const decorator = new Layout('custom/layout', { theme: 'dark' })
-        decorator.boot(component)
+        decorator.__boot(component)
 
         decorator.boot()
 
@@ -115,8 +115,8 @@ test.group('Layout Decorator', () => {
       async () => {
         const decorator1 = new Layout('layout1')
         const decorator2 = new Layout('layout2', { prop: 'value' })
-        decorator1.boot(component)
-        decorator2.boot(component)
+        decorator1.__boot(component)
+        decorator2.__boot(component)
 
         decorator1.boot()
         decorator2.boot()
@@ -151,7 +151,7 @@ test.group('Title Decorator', () => {
     })
 
     const decorator = new Title('My Page Title')
-    decorator.boot(component)
+    decorator.__boot(component)
 
     const mockView = {
       share: (data: Record<string, any>) => {
@@ -179,7 +179,7 @@ test.group('Title Decorator', () => {
 
     for (const title of titles) {
       const decorator = new Title(title)
-      decorator.boot(component)
+      decorator.__boot(component)
 
       const mockView = {
         share: (data: Record<string, any>) => {

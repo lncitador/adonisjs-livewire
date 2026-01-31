@@ -28,7 +28,7 @@ test.group('Renderless Decorator', () => {
       { dataStore, context: componentContext, features: [], ctx },
       async () => {
         const decorator = new Renderless()
-        decorator.boot(component)
+        decorator.__boot(component)
 
         decorator.call()
 
@@ -52,7 +52,7 @@ test.group('Renderless Decorator', () => {
       { dataStore, context: componentContext, features: [], ctx },
       async () => {
         const decorator = new Renderless()
-        decorator.boot(component)
+        decorator.__boot(component)
 
         decorator.call()
 

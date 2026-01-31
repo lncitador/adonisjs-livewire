@@ -315,6 +315,10 @@ test.group('Component', () => {
     const ctx = new HttpContextFactory().create()
     const component = new TestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
+    cleanup(() => {
+      component // isso não faz nada
+    })
+
     // HandlesPageComponents is mixed in but doesn't add methods directly
     // It's used for internal functionality
     assert.isTrue(true)

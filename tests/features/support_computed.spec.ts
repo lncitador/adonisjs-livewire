@@ -26,7 +26,31 @@ class ComputedTestComponent extends Component {
   }
 }
 
-test.group('Computed Decorator', () => {
+test.group('Computed Decorator', (group) => {
+  const edge = Edge.create()
+  const renderer = edge.createRenderer()
+  let component: ComputedTestComponent
+  let sharedData: Record<string, any>
+
+  group.each.setup(async () => {
+    const { app, router } = await setupApp()
+    const ctx = new HttpContextFactory().create()
+
+    component = new ComputedTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
+
+    component.view = renderer
+
+    renderer.share = (data: Record<string, any>) => {
+      sharedData = { ...sharedData, ...data }
+      return renderer
+    }
+
+    return async function () {
+      sharedData = {}
+      await app.terminate()
+    }
+  })
+
   test('should create Computed decorator with name and method', async ({ assert }) => {
     const decorator = new Computed('fullName', 'fullName')
 
@@ -34,44 +58,18 @@ test.group('Computed Decorator', () => {
     assert.equal(decorator.method, 'fullName')
   })
 
-  test('should share computed value with view on render', async ({ assert, cleanup }) => {
-    const { app, router } = await setupApp()
-    cleanup(() => app.terminate())
-
-    const ctx = new HttpContextFactory().create()
-    const component = new ComputedTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
-
-    const edge = Edge.create()
-    const renderer = edge.createRenderer()
-    component.view = renderer
-
+  test('should share computed value with view on render', async ({ assert }) => {
     const decorator = new Computed('fullName', 'fullName')
-    decorator.boot(component)
-
-    let sharedData: Record<string, any> = {}
-    renderer.share = (data: Record<string, any>) => {
-      sharedData = { ...sharedData, ...data }
-      return renderer
-    }
+    decorator.__boot(component)
 
     await decorator.render()
 
     assert.equal(sharedData.fullName, 'John Doe')
   })
 
-  test('should not share if method does not exist', async ({ assert, cleanup }) => {
-    const { app, router } = await setupApp()
-    cleanup(() => app.terminate())
-
-    const ctx = new HttpContextFactory().create()
-    const component = new ComputedTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
-
-    const edge = Edge.create()
-    const renderer = edge.createRenderer()
-    component.view = renderer
-
+  test('should not share if method does not exist', async ({ assert }) => {
     const decorator = new Computed('nonExistent', 'nonExistentMethod')
-    decorator.boot(component)
+    decorator.__boot(component)
 
     let shareCalled = false
     renderer.share = () => {
@@ -84,35 +82,16 @@ test.group('Computed Decorator', () => {
     assert.isFalse(shareCalled)
   })
 
-  test('should handle async computed methods', async ({ assert, cleanup }) => {
-    const { app, router } = await setupApp()
-    cleanup(() => app.terminate())
-
-    const ctx = new HttpContextFactory().create()
-    const component = new ComputedTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
-
-    const edge = Edge.create()
-    const renderer = edge.createRenderer()
-    component.view = renderer
-
+  test('should handle async computed methods', async ({ assert }) => {
     const decorator = new Computed('total', 'total')
-    decorator.boot(component)
-
-    let sharedData: Record<string, any> = {}
-    renderer.share = (data: Record<string, any>) => {
-      sharedData = { ...sharedData, ...data }
-      return renderer
-    }
+    decorator.__boot(component)
 
     await decorator.render()
 
     assert.equal(sharedData.total, 100)
   })
 
-  test('should handle different value types', async ({ assert, cleanup }) => {
-    const { app, router } = await setupApp()
-    cleanup(() => app.terminate())
-
+  test('should handle different value types', async ({ assert }) => {
     class TestComponent extends Component {
       async stringValue() {
         return 'string'
@@ -139,12 +118,11 @@ test.group('Computed Decorator', () => {
       }
     }
 
+    const { app, router } = await setupApp()
     const ctx = new HttpContextFactory().create()
-    const component = new TestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
 
-    const edge = Edge.create()
-    const renderer = edge.createRenderer()
-    component.view = renderer
+    const $component = new TestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
+    $component.view = renderer
 
     const decorator1 = new Computed('stringValue', 'stringValue')
     const decorator2 = new Computed('numberValue', 'numberValue')
@@ -152,13 +130,12 @@ test.group('Computed Decorator', () => {
     const decorator4 = new Computed('objectValue', 'objectValue')
     const decorator5 = new Computed('arrayValue', 'arrayValue')
 
-    decorator1.boot(component)
-    decorator2.boot(component)
-    decorator3.boot(component)
-    decorator4.boot(component)
-    decorator5.boot(component)
+    decorator1.__boot($component)
+    decorator2.__boot($component)
+    decorator3.__boot($component)
+    decorator4.__boot($component)
+    decorator5.__boot($component)
 
-    const sharedData: Record<string, any> = {}
     renderer.share = (data: Record<string, any>) => {
       Object.assign(sharedData, data)
       return renderer
@@ -181,9 +158,6 @@ test.group('Computed Decorator', () => {
     assert,
     cleanup,
   }) => {
-    const { app, router } = await setupApp()
-    cleanup(() => app.terminate())
-
     let count = 0
     class MemoTestComponent extends Component {
       async foo() {
@@ -196,13 +170,14 @@ test.group('Computed Decorator', () => {
       }
     }
 
+    const { app, router } = await setupApp()
     const ctx = new HttpContextFactory().create()
-    const component = new MemoTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
-    const edge = Edge.create()
-    component.view = edge.createRenderer()
+
+    const $component = new MemoTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
+    $component.view = edge.createRenderer()
 
     const decorator = new Computed('foo', 'foo')
-    decorator.boot(component)
+    decorator.__boot($component)
 
     await decorator.getValue()
     await decorator.getValue()
@@ -212,10 +187,7 @@ test.group('Computed Decorator', () => {
     assert.equal(await decorator.getValue(), 'memo')
   })
 
-  test('should bust cache on clearCache (PHP parity: unset)', async ({ assert, cleanup }) => {
-    const { app, router } = await setupApp()
-    cleanup(() => app.terminate())
-
+  test('should bust cache on clearCache (PHP parity: unset)', async ({ assert }) => {
     let count = 0
     class UnsetTestComponent extends Component {
       async bar() {
@@ -227,14 +199,14 @@ test.group('Computed Decorator', () => {
         return Promise.resolve('<div>Unset</div>')
       }
     }
-
+    const { app, router } = await setupApp()
     const ctx = new HttpContextFactory().create()
-    const component = new UnsetTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
-    const edge = Edge.create()
-    component.view = edge.createRenderer()
+
+    const $component = new UnsetTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
+    $component.view = edge.createRenderer()
 
     const decorator = new Computed('bar', 'bar')
-    decorator.boot(component)
+    decorator.__boot($component)
 
     assert.equal(await decorator.getValue(), 1)
     decorator.clearCache()
@@ -243,20 +215,11 @@ test.group('Computed Decorator', () => {
     assert.equal(await decorator.getValue(), 3)
   })
 
-  test('should throw when computed method called as action (PHP parity)', async ({
-    assert,
-    cleanup,
-  }) => {
-    const { app, router } = await setupApp()
-    cleanup(() => app.terminate())
-
+  test('should throw when computed method called as action (PHP parity)', async ({ assert }) => {
+    const { app } = await setupApp()
     const ctx = new HttpContextFactory().create()
-    const component = new ComputedTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
-    const edge = Edge.create()
-    component.view = edge.createRenderer()
-
     const decorator = new Computed('fullName', 'fullName')
-    decorator.boot(component)
+    decorator.__boot(component)
     component.addDecorator(decorator)
 
     const hook = new SupportDecorators()
@@ -271,6 +234,7 @@ test.group('Computed Decorator', () => {
       async () => {
         try {
           await hook.call('fullName', [], () => {})
+          console.log('Passou')
           assert.fail('Expected CannotCallComputedDirectlyException')
         } catch (err: any) {
           assert.equal(err.name, 'CannotCallComputedDirectlyException')

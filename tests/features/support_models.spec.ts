@@ -35,7 +35,7 @@ test.group('Modelable Decorator', () => {
       { dataStore, context: componentContext, features: [], ctx },
       async () => {
         const decorator = new Modelable('user', 'id')
-        decorator.boot(component)
+        decorator.__boot(component)
 
         decorator.mount()
 
@@ -68,8 +68,8 @@ test.group('Modelable Decorator', () => {
       async () => {
         const decorator1 = new Modelable('user', 'id')
         const decorator2 = new Modelable('post', 'slug')
-        decorator1.boot(component)
-        decorator2.boot(component)
+        decorator1.__boot(component)
+        decorator2.__boot(component)
 
         decorator1.mount()
         decorator2.mount()
@@ -103,7 +103,7 @@ test.group('Modelable Decorator', () => {
       { dataStore, context: componentContext, features: [], ctx },
       async () => {
         const decorator = new Modelable('post.author', 'authorId')
-        decorator.boot(component)
+        decorator.__boot(component)
 
         decorator.mount()
 

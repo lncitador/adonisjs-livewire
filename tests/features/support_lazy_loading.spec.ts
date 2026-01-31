@@ -138,7 +138,7 @@ test.group('SupportLazyLoading', () => {
       { dataStore, context: componentContext, features: [], ctx },
       async () => {
         const lazyDecorator = new Lazy()
-        lazyDecorator.boot(component)
+        lazyDecorator.__boot(component)
         component.addDecorator(lazyDecorator)
 
         const hook = new SupportLazyLoading()
@@ -180,7 +180,7 @@ test.group('SupportLazyLoading', () => {
       { dataStore, context: componentContext, features: [], ctx },
       async () => {
         const lazyDecorator = new Lazy(false) // isolate = false
-        lazyDecorator.boot(component)
+        lazyDecorator.__boot(component)
         component.addDecorator(lazyDecorator)
 
         const hook = new SupportLazyLoading()

@@ -60,7 +60,7 @@ test.group('Url Decorator', () => {
       { dataStore, context: componentContext, features: [], ctx },
       async () => {
         const decorator = new Url('search')
-        decorator.boot(component)
+        decorator.__boot(component)
 
         await decorator.mount()
 
@@ -93,7 +93,7 @@ test.group('Url Decorator', () => {
       { dataStore, context: componentContext, features: [], ctx },
       async () => {
         const decorator = new Url('nonExistent')
-        decorator.boot(component)
+        decorator.__boot(component)
 
         await decorator.mount()
 
@@ -127,7 +127,7 @@ test.group('Url Decorator', () => {
       { dataStore, context: componentContext, features: [], ctx },
       async () => {
         const decorator = new Url('filter', null, false, false, null, true)
-        decorator.boot(component)
+        decorator.__boot(component)
 
         await decorator.mount()
 
@@ -160,7 +160,7 @@ test.group('Url Decorator', () => {
       { dataStore, context: componentContext, features: [], ctx },
       async () => {
         const decorator = new Url('filter', null, false, false, null, false)
-        decorator.boot(component)
+        decorator.__boot(component)
 
         await decorator.mount()
 
@@ -189,7 +189,7 @@ test.group('Url Decorator', () => {
       { dataStore, context: componentContext, features: [], ctx },
       async () => {
         const decorator = new Url('search', 'q', true, true, ['page'], false)
-        decorator.boot(component)
+        decorator.__boot(component)
 
         await decorator.dehydrate(componentContext)
 
@@ -225,7 +225,7 @@ test.group('Url Decorator', () => {
       { dataStore, context: componentContext, features: [], ctx },
       async () => {
         const decorator = new Url('search')
-        decorator.boot(component)
+        decorator.__boot(component)
 
         await decorator.dehydrate(componentContext)
 
@@ -257,7 +257,7 @@ test.group('Url Decorator', () => {
       { dataStore, context: componentContext, features: [], ctx },
       async () => {
         const decorator = new Url('filter', null, false, false, null, false)
-        decorator.boot(component)
+        decorator.__boot(component)
 
         component.filter = null
 
@@ -288,7 +288,7 @@ test.group('Url Decorator', () => {
       { dataStore, context: componentContext, features: [], ctx },
       async () => {
         const decorator = new Url('filter', null, false, false, null, true)
-        decorator.boot(component)
+        decorator.__boot(component)
 
         component.filter = null
 
@@ -319,7 +319,7 @@ test.group('Url Decorator', () => {
       { dataStore, context: componentContext, features: [], ctx },
       async () => {
         const decorator = new Url('search')
-        decorator.boot(component)
+        decorator.__boot(component)
 
         component.filter = 'value'
 
@@ -353,7 +353,7 @@ test.group('Url Decorator', () => {
       { dataStore, context: componentContext, features: [], ctx },
       async () => {
         const decorator = new Url('search', null, true) // history = true
-        decorator.boot(component)
+        decorator.__boot(component)
 
         await decorator.dehydrate(componentContext)
 
@@ -385,7 +385,7 @@ test.group('Url Decorator', () => {
       { dataStore, context: componentContext, features: [], ctx },
       async () => {
         const decorator = new Url('search', null, false) // history = false
-        decorator.boot(component)
+        decorator.__boot(component)
 
         await decorator.dehydrate(componentContext)
 
