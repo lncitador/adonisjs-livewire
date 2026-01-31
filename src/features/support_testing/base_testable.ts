@@ -11,6 +11,7 @@ import { ApplicationService, HttpRouterService } from '@adonisjs/core/types'
 import { Testable } from './testable.js'
 import { MakesAssertions } from './makes_assertions.js'
 import { TestsValidation } from '../support_validation/tests_validation.js'
+import { TestsRedirects } from '../support_redirects/tests_redirects.js'
 
 /**
  * Type helper to convert MakesAssertions methods to return ChainableTest
@@ -49,6 +50,10 @@ class ChainableTest implements PromiseLike<Testable> {
           'assertNotDispatched',
           'assertHasErrors',
           'assertHasNoErrors',
+          'assertRedirect',
+          'assertRedirectContains',
+          'assertRedirectToRoute',
+          'assertNoRedirect',
         ]
 
         const isAssertionMethod = assertionMethods.includes(prop as string)
@@ -167,7 +172,10 @@ class ChainableTest implements PromiseLike<Testable> {
 
 // Add interface declaration to extend ChainableTest with MakesAssertions methods
 interface ChainableTest
-  extends ChainableAssertions<MakesAssertions>, ChainableAssertions<TestsValidation> {}
+  extends
+    ChainableAssertions<MakesAssertions>,
+    ChainableAssertions<TestsValidation>,
+    ChainableAssertions<TestsRedirects> {}
 
 export class BaseTestable extends Macroable {
   #state: ComponentState
