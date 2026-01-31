@@ -1,8 +1,7 @@
 import type { ApplicationService } from '@adonisjs/core/types'
-import type { Component } from './component.js'
 import ComponentContext from './component_context.js'
 import { store } from './store.js'
-import { BaseComponent } from './base_component.js'
+import { Component } from './component.js'
 
 /**
  * Base class for all Livewire features (hooks)
@@ -12,7 +11,7 @@ export default abstract class ComponentHook {
   /**
    * The component instance this hook is attached to
    */
-  declare component: BaseComponent
+  declare component: Component
 
   /**
    * The application service instance
@@ -21,7 +20,7 @@ export default abstract class ComponentHook {
   /**
    * Set the component instance
    */
-  setComponent(component: BaseComponent): void {
+  setComponent(component: Component): void {
     this.component = component
   }
 
@@ -268,7 +267,7 @@ export default abstract class ComponentHook {
    * @param newValue - The new value being set
    * @returns Optional callback function to execute after the update
    */
-  update?(propertyName: string, fullPath: string, newValue: any): Promise<Function | undefined>
+  update?(propertyName: string, fullPath: string, newValue: any): Promise<Function | void>
 
   /**
    * Optional render lifecycle hook
@@ -276,5 +275,5 @@ export default abstract class ComponentHook {
    * Override this method in subclasses to implement render logic
    * @returns Optional callback function to execute after rendering
    */
-  render?(...params: any[]): Promise<Function | undefined>
+  render?(...params: any[]): Promise<Function | void>
 }
