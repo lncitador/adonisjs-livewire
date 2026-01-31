@@ -5,6 +5,8 @@ import { Component } from '../../src/component.js'
 import { livewireContext, DataStore } from '../../src/store.js'
 import ComponentContext from '../../src/component_context.js'
 import { store } from '../../src/store.js'
+import On from '../../src/features/support_events/on.js'
+import { on } from '../../src/decorators/index.js'
 
 /**
  * Test component for events
@@ -148,5 +150,164 @@ test.group('Support Events Feature', () => {
 
     const listeners = component.getListeners()
     assert.deepEqual(listeners, {})
+  })
+})
+
+test.group('On Decorator', () => {
+  test('should create On decorator with name and event', async ({ assert }) => {
+    const decorator = new On('user-created', 'handleUserCreated')
+
+    assert.equal(decorator.name, 'user-created')
+    assert.equal(decorator.event, 'handleUserCreated')
+  })
+
+  test('should push listener to store on boot', async ({ assert, cleanup }) => {
+    const { app, router } = await setupApp()
+    cleanup(() => app.terminate())
+
+    const ctx = new HttpContextFactory().create()
+    const component = new EventsTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
+
+    const dataStore = new DataStore('test-store')
+    const componentContext = new ComponentContext(component)
+
+    await livewireContext.run(
+      { dataStore, context: componentContext, features: [], ctx },
+      async () => {
+        const decorator = new On('custom-event', 'handleCustomEvent')
+        decorator.__boot(component)
+
+        await decorator.boot()
+
+        const listeners = store(component).get('listeners')
+        assert.isArray(listeners)
+        assert.lengthOf(listeners, 1)
+        assert.deepEqual(listeners[0], {
+          name: 'custom-event',
+          event: 'handleCustomEvent',
+        })
+      }
+    )
+  })
+
+  test('should register multiple listeners', async ({ assert, cleanup }) => {
+    const { app, router } = await setupApp()
+    cleanup(() => app.terminate())
+
+    const ctx = new HttpContextFactory().create()
+    const component = new EventsTestComponent({ ctx, app, router, id: 'test-id', name: 'test' })
+
+    const dataStore = new DataStore('test-store')
+    const componentContext = new ComponentContext(component)
+
+    await livewireContext.run(
+      { dataStore, context: componentContext, features: [], ctx },
+      async () => {
+        const decorator1 = new On('event-one', 'handleOne')
+        const decorator2 = new On('event-two', 'handleTwo')
+        decorator1.__boot(component)
+        decorator2.__boot(component)
+
+        await decorator1.boot()
+        await decorator2.boot()
+
+        const listeners = store(component).get('listeners')
+        assert.lengthOf(listeners, 2)
+        assert.deepEqual(listeners[0], { name: 'event-one', event: 'handleOne' })
+        assert.deepEqual(listeners[1], { name: 'event-two', event: 'handleTwo' })
+      }
+    )
+  })
+})
+
+test.group('On Decorator - Use @on', () => {
+  test('should register listener via @on decorator', async ({ assert, cleanup }) => {
+    const { app, router } = await setupApp()
+    cleanup(() => app.terminate())
+
+    // Component with @on decorator
+    class DecoratedComponent extends Component {
+      handleUserCreated() {
+        // handler method
+      }
+
+      async render() {
+        return Promise.resolve('<div>Decorated</div>')
+      }
+    }
+
+    // Simulate decorator application
+    const onDecorator = on('user-created')
+    onDecorator(DecoratedComponent.prototype, 'handleUserCreated')
+
+    const ctx = new HttpContextFactory().create()
+    const component = new DecoratedComponent({ ctx, app, router, id: 'test-id', name: 'test' })
+
+    const dataStore = new DataStore('test-store')
+    const componentContext = new ComponentContext(component)
+
+    await livewireContext.run(
+      { dataStore, context: componentContext, features: [], ctx },
+      async () => {
+        // Boot all decorators
+        for (const decorator of component.getDecorators()) {
+          decorator.__boot(component)
+          if (typeof decorator['boot'] === 'function') {
+            await decorator['boot']()
+          }
+        }
+
+        const listeners = store(component).get('listeners')
+        assert.isArray(listeners)
+        assert.lengthOf(listeners, 1)
+        assert.deepEqual(listeners[0], {
+          name: 'user-created',
+          event: 'handleUserCreated',
+        })
+      }
+    )
+  })
+
+  test('should use method name as event name when not specified', async ({ assert, cleanup }) => {
+    const { app, router } = await setupApp()
+    cleanup(() => app.terminate())
+
+    class DecoratedComponent extends Component {
+      onUserDeleted() {
+        // handler
+      }
+
+      async render() {
+        return Promise.resolve('<div>Decorated</div>')
+      }
+    }
+
+    // @on() without name uses method name
+    const onDecorator = on()
+    onDecorator(DecoratedComponent.prototype, 'onUserDeleted')
+
+    const ctx = new HttpContextFactory().create()
+    const component = new DecoratedComponent({ ctx, app, router, id: 'test-id', name: 'test' })
+
+    const dataStore = new DataStore('test-store')
+    const componentContext = new ComponentContext(component)
+
+    await livewireContext.run(
+      { dataStore, context: componentContext, features: [], ctx },
+      async () => {
+        for (const decorator of component.getDecorators()) {
+          decorator.__boot(component)
+          if (typeof decorator['boot'] === 'function') {
+            await decorator['boot']()
+          }
+        }
+
+        const listeners = store(component).get('listeners')
+        assert.deepEqual(listeners[0], {
+          name: 'onUserDeleted',
+          event: 'onUserDeleted',
+        })
+      }
+    )
   })
 })

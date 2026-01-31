@@ -5,6 +5,8 @@ import { Component } from '../../src/component.js'
 import { livewireContext, DataStore } from '../../src/store.js'
 import ComponentContext from '../../src/component_context.js'
 import vine from '@vinejs/vine'
+import Validator from '../../src/features/support_validation/validator.js'
+import { validator } from '../../src/decorators/index.js'
 
 /**
  * Test component for validation
@@ -476,5 +478,140 @@ test.group('Support Validation Feature', () => {
         assert.equal(validated.email, 'jane@example.com')
       }
     )
+  })
+})
+
+test.group('Validator Decorator', () => {
+  test('should create Validator decorator with propertyName and schemaFactory', async ({
+    assert,
+  }) => {
+    const schemaFactory = () => vine.string().minLength(3)
+    const decorator = new Validator('name', schemaFactory)
+
+    assert.equal(decorator.propertyName, 'name')
+    assert.equal(decorator.schemaFactory, schemaFactory)
+    assert.isTrue(decorator.onUpdate) // default value
+  })
+
+  test('should create Validator decorator with onUpdate false', async ({ assert }) => {
+    const schemaFactory = () => vine.string().email()
+    const decorator = new Validator('email', schemaFactory, false)
+
+    assert.equal(decorator.propertyName, 'email')
+    assert.isFalse(decorator.onUpdate)
+  })
+
+  test('should call schemaFactory and return schema', async ({ assert }) => {
+    let factoryCalled = false
+    const schemaFactory = () => {
+      factoryCalled = true
+      return vine.string().minLength(5)
+    }
+    const decorator = new Validator('username', schemaFactory)
+
+    const schema = decorator.schemaFactory()
+
+    assert.isTrue(factoryCalled)
+    assert.isDefined(schema)
+  })
+
+  test('should work with complex schemas', async ({ assert }) => {
+    const schemaFactory = () =>
+      vine.object({
+        street: vine.string(),
+        city: vine.string(),
+        zip: vine.string().fixedLength(5),
+      })
+
+    const decorator = new Validator('address', schemaFactory)
+
+    assert.equal(decorator.propertyName, 'address')
+    assert.isDefined(decorator.schemaFactory())
+  })
+})
+
+test.group('Validator Decorator - Use @validator', () => {
+  test('should register validator via @validator decorator', async ({ assert, cleanup }) => {
+    const { app, router } = await setupApp()
+    cleanup(() => app.terminate())
+
+    class DecoratedComponent extends Component {
+      declare name: string
+
+      async render() {
+        return Promise.resolve('<div>Decorated</div>')
+      }
+    }
+
+    // Simulate @validator decorator application
+    const validatorDecorator = validator(() => vine.string().minLength(3))
+    validatorDecorator(DecoratedComponent.prototype, 'name')
+
+    const ctx = new HttpContextFactory().create()
+    const component = new DecoratedComponent({ ctx, app, router, id: 'test-id', name: 'test' })
+
+    const decorators = component.getDecorators()
+    assert.lengthOf(decorators, 1)
+
+    const dec = decorators[0] as Validator
+    assert.equal(dec.propertyName, 'name')
+    assert.isTrue(dec.onUpdate)
+  })
+
+  test('should respect onUpdate option in @validator', async ({ assert, cleanup }) => {
+    const { app, router } = await setupApp()
+    cleanup(() => app.terminate())
+
+    class DecoratedComponent extends Component {
+      declare email: string
+
+      async render() {
+        return Promise.resolve('<div>Decorated</div>')
+      }
+    }
+
+    // @validator with onUpdate: false
+    const validatorDecorator = validator(() => vine.string().email(), { onUpdate: false })
+    validatorDecorator(DecoratedComponent.prototype, 'email')
+
+    const ctx = new HttpContextFactory().create()
+    const component = new DecoratedComponent({ ctx, app, router, id: 'test-id', name: 'test' })
+
+    const decorators = component.getDecorators()
+    const dec = decorators[0] as Validator
+
+    assert.equal(dec.propertyName, 'email')
+    assert.isFalse(dec.onUpdate)
+  })
+
+  test('should support multiple @validator decorators on same component', async ({
+    assert,
+    cleanup,
+  }) => {
+    const { app, router } = await setupApp()
+    cleanup(() => app.terminate())
+
+    class DecoratedComponent extends Component {
+      declare name: string
+      declare email: string
+      declare age: number
+
+      async render() {
+        return Promise.resolve('<div>Decorated</div>')
+      }
+    }
+
+    validator(() => vine.string().minLength(2))(DecoratedComponent.prototype, 'name')
+    validator(() => vine.string().email())(DecoratedComponent.prototype, 'email')
+    validator(() => vine.number().min(18))(DecoratedComponent.prototype, 'age')
+
+    const ctx = new HttpContextFactory().create()
+    const component = new DecoratedComponent({ ctx, app, router, id: 'test-id', name: 'test' })
+
+    const decorators = component.getDecorators()
+    assert.lengthOf(decorators, 3)
+
+    const propertyNames = decorators.map((d) => (d as Validator).propertyName)
+    assert.includeMembers(propertyNames, ['name', 'email', 'age'])
   })
 })

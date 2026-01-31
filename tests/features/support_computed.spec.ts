@@ -8,6 +8,7 @@ import { DataStore } from '../../src/store.js'
 import ComponentContext from '../../src/component_context.js'
 import { livewireContext } from '../../src/store.js'
 import { Edge } from 'edge.js'
+import { computed } from '../../src/decorators/index.js'
 
 class ComputedTestComponent extends Component {
   firstName = 'John'
@@ -243,5 +244,202 @@ test.group('Computed Decorator', (group) => {
         }
       }
     )
+  })
+})
+
+test.group('Computed Decorator - Use @computed', () => {
+  test('should register computed via @computed decorator', async ({ assert, cleanup }) => {
+    const { app, router } = await setupApp()
+    cleanup(() => app.terminate())
+
+    class DecoratedComponent extends Component {
+      firstName = 'John'
+      lastName = 'Doe'
+
+      async fullName() {
+        return `${this.firstName} ${this.lastName}`
+      }
+
+      async render() {
+        return Promise.resolve('<div>Decorated</div>')
+      }
+    }
+
+    // Simulate @computed decorator application
+    const computedDecorator = computed()
+    computedDecorator(
+      DecoratedComponent.prototype,
+      'fullName',
+      Object.getOwnPropertyDescriptor(DecoratedComponent.prototype, 'fullName')!
+    )
+
+    const ctx = new HttpContextFactory().create()
+    const component = new DecoratedComponent({ ctx, app, router, id: 'test-id', name: 'test' })
+
+    const decorators = component.getDecorators()
+    assert.lengthOf(decorators, 1)
+
+    const dec = decorators[0] as Computed
+    assert.equal(dec.name, 'fullName')
+    assert.equal(dec.method, 'fullName')
+  })
+
+  test('should use custom name in @computed decorator', async ({ assert, cleanup }) => {
+    const { app, router } = await setupApp()
+    cleanup(() => app.terminate())
+
+    class DecoratedComponent extends Component {
+      async calculateTotal() {
+        return 100
+      }
+
+      async render() {
+        return Promise.resolve('<div>Decorated</div>')
+      }
+    }
+
+    // @computed('total') - custom name
+    const computedDecorator = computed('total')
+    computedDecorator(
+      DecoratedComponent.prototype,
+      'calculateTotal',
+      Object.getOwnPropertyDescriptor(DecoratedComponent.prototype, 'calculateTotal')!
+    )
+
+    const ctx = new HttpContextFactory().create()
+    const component = new DecoratedComponent({ ctx, app, router, id: 'test-id', name: 'test' })
+
+    const decorators = component.getDecorators()
+    const dec = decorators[0] as Computed
+
+    assert.equal(dec.name, 'total')
+    assert.equal(dec.method, 'calculateTotal')
+  })
+
+  test('should memoize computed value via @computed', async ({ assert, cleanup }) => {
+    const { app, router } = await setupApp()
+    cleanup(() => app.terminate())
+
+    let callCount = 0
+    class DecoratedComponent extends Component {
+      async expensiveComputation() {
+        callCount++
+        return 'result'
+      }
+
+      async render() {
+        return Promise.resolve('<div>Decorated</div>')
+      }
+    }
+
+    computed()(
+      DecoratedComponent.prototype,
+      'expensiveComputation',
+      Object.getOwnPropertyDescriptor(DecoratedComponent.prototype, 'expensiveComputation')!
+    )
+
+    const ctx = new HttpContextFactory().create()
+    const component = new DecoratedComponent({ ctx, app, router, id: 'test-id', name: 'test' })
+
+    const edge = Edge.create()
+    component.view = edge.createRenderer()
+
+    // Boot the decorator
+    const decorator = component.getDecorators()[0] as Computed
+    decorator.__boot(component)
+
+    // Call getValue multiple times
+    await decorator.getValue()
+    await decorator.getValue()
+    await decorator.getValue()
+
+    // Should only call the method once (memoization)
+    assert.equal(callCount, 1)
+  })
+
+  test('should share computed value with view via @computed', async ({ assert, cleanup }) => {
+    const { app, router } = await setupApp()
+    cleanup(() => app.terminate())
+
+    class DecoratedComponent extends Component {
+      items = [1, 2, 3, 4, 5]
+
+      async itemCount() {
+        return this.items.length
+      }
+
+      async render() {
+        return Promise.resolve('<div>Decorated</div>')
+      }
+    }
+
+    computed()(
+      DecoratedComponent.prototype,
+      'itemCount',
+      Object.getOwnPropertyDescriptor(DecoratedComponent.prototype, 'itemCount')!
+    )
+
+    const ctx = new HttpContextFactory().create()
+    const component = new DecoratedComponent({ ctx, app, router, id: 'test-id', name: 'test' })
+
+    const edge = Edge.create()
+    const renderer = edge.createRenderer()
+    component.view = renderer
+
+    let sharedData: Record<string, any> = {}
+    renderer.share = (data: Record<string, any>) => {
+      sharedData = { ...sharedData, ...data }
+      return renderer
+    }
+
+    const decorator = component.getDecorators()[0] as Computed
+    decorator.__boot(component)
+
+    await decorator.render()
+
+    assert.equal(sharedData.itemCount, 5)
+  })
+
+  test('should support multiple @computed decorators', async ({ assert, cleanup }) => {
+    const { app, router } = await setupApp()
+    cleanup(() => app.terminate())
+
+    class DecoratedComponent extends Component {
+      firstName = 'John'
+      lastName = 'Doe'
+      items = [1, 2, 3]
+
+      async fullName() {
+        return `${this.firstName} ${this.lastName}`
+      }
+
+      async itemCount() {
+        return this.items.length
+      }
+
+      async render() {
+        return Promise.resolve('<div>Decorated</div>')
+      }
+    }
+
+    computed()(
+      DecoratedComponent.prototype,
+      'fullName',
+      Object.getOwnPropertyDescriptor(DecoratedComponent.prototype, 'fullName')!
+    )
+    computed()(
+      DecoratedComponent.prototype,
+      'itemCount',
+      Object.getOwnPropertyDescriptor(DecoratedComponent.prototype, 'itemCount')!
+    )
+
+    const ctx = new HttpContextFactory().create()
+    const component = new DecoratedComponent({ ctx, app, router, id: 'test-id', name: 'test' })
+
+    const decorators = component.getDecorators()
+    assert.lengthOf(decorators, 2)
+
+    const names = decorators.map((d) => (d as Computed).name)
+    assert.includeMembers(names, ['fullName', 'itemCount'])
   })
 })
