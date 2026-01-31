@@ -70,6 +70,99 @@ export default class Livewire {
     }
   }
 
+  /**
+   * Check if a component exists by name
+   * PHP parity: exists($componentNameOrClass)
+   */
+  exists(name: string): boolean {
+    if (this.components.has(name)) {
+      return true
+    }
+
+    const jsPath = name
+      .split('.')
+      .map((s) => string.snakeCase(s))
+      .join('/')
+
+    const livewirePaths = [
+      this.app.makeURL(`./app/livewire/${jsPath}.js`),
+      this.app.makeURL(`./app/livewire/${jsPath}/index.js`),
+      this.app.makeURL(`./app/livewire/${jsPath}.ts`),
+      this.app.makeURL(`./app/livewire/${jsPath}.tsx`),
+      this.app.makeURL(`./app/livewire/${jsPath}/index.ts`),
+      this.app.makeURL(`./app/livewire/${jsPath}/index.tsx`),
+    ]
+
+    for (const livewirePath of livewirePaths) {
+      if (existsSync(fileURLToPath(livewirePath))) {
+        return true
+      }
+    }
+
+    const viewPath = name
+      .split('.')
+      .map((s) => string.snakeCase(s))
+      .join('/')
+
+    const livewireViewPaths = [
+      this.app.makeURL(`./resources/views/livewire/${viewPath}.edge`),
+      this.app.makeURL(`./resources/views/livewire/${viewPath}/index.edge`),
+    ]
+
+    for (const livewireViewPath of livewireViewPaths) {
+      if (existsSync(fileURLToPath(livewireViewPath))) {
+        return true
+      }
+    }
+
+    return false
+  }
+
+  /**
+   * Check if current request is a Livewire request
+   * PHP parity: isLivewireRequest()
+   */
+  static isLivewireRequest(ctx?: HttpContext): boolean {
+    const context = ctx || getLivewireContext()?.ctx
+    if (!context) return false
+    return context.request.header('x-livewire') !== undefined
+  }
+
+  /**
+   * Instance method for isLivewireRequest
+   */
+  isLivewireRequest(ctx?: HttpContext): boolean {
+    return Livewire.isLivewireRequest(ctx)
+  }
+
+  /**
+   * Get the current component from the Livewire context
+   * PHP parity: current()
+   */
+  static current(): Component | null {
+    const context = getLivewireContext()
+    return context?.context?.component ?? null
+  }
+
+  /**
+   * Flush static state between requests (useful for testing)
+   * PHP parity: flushState()
+   */
+  static flushState(): void {
+    debug('flushState: clearing static state')
+    Livewire.FEATURES = []
+    Livewire.PROPERTY_SYNTHESIZERS = []
+  }
+
+  /**
+   * Instance method to flush state and clear component cache
+   */
+  flushState(): void {
+    debug('flushState: clearing instance and static state')
+    this.components.clear()
+    Livewire.flushState()
+  }
+
   async trigger(event: string, component: Component, ...params: any[]) {
     debug('trigger: event=%s component=%s', event, component.getName())
     const context = getLivewireContext()
@@ -578,12 +671,56 @@ export default class Livewire {
     })
   }
 
+  /**
+   * Get public methods from a component (excluding internal ones)
+   * PHP parity: getPublicMethods
+   */
+  protected getPublicMethods(component: Component): string[] {
+    const methods: string[] = []
+    let prototype = Object.getPrototypeOf(component)
+
+    while (prototype && prototype !== Object.prototype) {
+      const props = Object.getOwnPropertyNames(prototype)
+
+      for (const prop of props) {
+        if (prop === 'constructor') continue
+        if (prop === 'render') continue
+        if (prop.startsWith('_')) continue
+
+        const descriptor = Object.getOwnPropertyDescriptor(prototype, prop)
+        if (descriptor && typeof descriptor.value === 'function') {
+          methods.push(prop)
+        }
+      }
+
+      prototype = Object.getPrototypeOf(prototype)
+    }
+
+    // Add internal dispatch methods
+    methods.push('__dispatch')
+    methods.push('__lazyLoad')
+
+    return methods
+  }
+
   async callMethods(
     component: Component,
     calls: ComponentCall[],
     context: ComponentContext
   ): Promise<any[]> {
     debug('callMethods: executing %d calls on component=%s', calls.length, component.getName())
+
+    // PHP parity: validate max calls limit
+    const maxCalls = this.config.limits.maxCalls
+    if (calls.length > maxCalls) {
+      throw new Error(
+        `Too many method calls. Maximum allowed: ${maxCalls}, received: ${calls.length}`
+      )
+    }
+
+    // Get valid public methods for validation
+    const publicMethods = this.getPublicMethods(component)
+
     let returns: any[] = []
 
     for (const call of calls) {
@@ -592,13 +729,12 @@ export default class Livewire {
         let params = call['params']
         debug('callMethods: executing method=%s with params=%O', method, params)
 
-        // let methods = getPublicMethods(component)
-        // methods = methods.filter((m) => m !== 'render')
-        // methods.push('__dispatch')
-        // methods.push('__lazyLoad')
-        // if (methods.includes(method) === false) {
-        //   throw new Error(`Method \`${method}\` does not exist on component ${component.getName()}`)
-        // }
+        // PHP parity: validate method is public and callable
+        if (!publicMethods.includes(method)) {
+          throw new Error(
+            `Method \`${method}\` does not exist or is not callable on component ${component.getName()}`
+          )
+        }
 
         let earlyReturnCalled = false
         let earlyReturn: any = null

@@ -128,4 +128,40 @@ test.group('defineConfig', () => {
     assert.notEqual(config1, config2)
     assert.notEqual(config1.navigate, config2.navigate)
   })
+
+  test('should include default limits config', async ({ assert }) => {
+    const config = defineConfig({})
+
+    assert.deepEqual(config.limits, {
+      maxCalls: 10,
+      maxSize: 1024 * 1024,
+      maxComponents: 10,
+    })
+  })
+
+  test('should merge partial limits config', async ({ assert }) => {
+    const config = defineConfig({
+      limits: {
+        maxCalls: 5,
+      },
+    })
+
+    assert.equal(config.limits.maxCalls, 5)
+    assert.equal(config.limits.maxSize, 1024 * 1024) // Default preserved
+    assert.equal(config.limits.maxComponents, 10) // Default preserved
+  })
+
+  test('should override all limits config', async ({ assert }) => {
+    const config = defineConfig({
+      limits: {
+        maxCalls: 20,
+        maxSize: 2048,
+        maxComponents: 5,
+      },
+    })
+
+    assert.equal(config.limits.maxCalls, 20)
+    assert.equal(config.limits.maxSize, 2048)
+    assert.equal(config.limits.maxComponents, 5)
+  })
 })

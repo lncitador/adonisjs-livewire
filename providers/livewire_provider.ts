@@ -18,6 +18,7 @@ import type Livewire from '../src/livewire.js'
 import { EventBus } from '../src/event_bus.js'
 import { ModelSynth } from '../src/synthesizers/model.js'
 import { ArraySynth } from '../src/synthesizers/array.js'
+import { DateSynth } from '../src/synthesizers/date.js'
 import debug from '../src/debug.js'
 
 const currentDirname = dirname(fileURLToPath(import.meta.url))
@@ -209,7 +210,7 @@ export default class LivewireProvider {
       }
     }
 
-    debug('registering property synthesizers: ModelSynth, ArraySynth')
-    Livewire.registerPropertySynthesizer([ModelSynth, ArraySynth])
+    debug('registering property synthesizers: ModelSynth, ArraySynth, DateSynth')
+    Livewire.registerPropertySynthesizer([ModelSynth, ArraySynth, DateSynth])
   }
 }
