@@ -1,4 +1,3 @@
-import { Component } from '../../component.js'
 import { store } from '../../store.js'
 import { Decorator } from '../support_decorators/decorator.js'
 
@@ -10,11 +9,7 @@ export default class Layout extends Decorator {
     super()
   }
 
-  boot(component?: Component) {
-    if (component) {
-      super.boot(component)
-      return
-    }
+  async boot() {
     store(this.component).push('layout', {
       name: this.name,
       props: this.props,

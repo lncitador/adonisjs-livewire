@@ -14,7 +14,7 @@ export default class Url extends Decorator {
     super()
   }
 
-  mount() {
+  async mount() {
     let nonExistentValue = 'livewire:' + cuid()
     let value: any
 
@@ -32,7 +32,7 @@ export default class Url extends Decorator {
     this.component[this.name] = value
   }
 
-  dehydrate(context: ComponentContext) {
+  async dehydrate(context: ComponentContext) {
     if (!context.mounting) return
 
     let queryString = {

@@ -16,7 +16,7 @@ export default class Validator extends Decorator {
     super()
   }
 
-  mount() {
+  async mount() {
     // Register this property for validation
     // The schemaFactory will be called when building the schema
   }

@@ -1,3 +1,4 @@
+import 'reflect-metadata'
 import { Component } from '../component.js'
 import Computed from '../features/support_computed/computed.js'
 import On from '../features/support_events/on.js'
