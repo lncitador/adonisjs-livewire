@@ -64,6 +64,10 @@ export type ComponentMemo = {
    */
   errors?: Record<string, string[]>
   /**
+   * Failed validation rules (field => rules)
+   */
+  failedRules?: Record<string, string[]>
+  /**
    * Locale
    */
   locale?: string
@@ -135,6 +139,14 @@ export type ComponentEffects = {
     event: string
     params?: Record<string, any>
   }
+  /**
+   * Validation errors (field => messages)
+   */
+  errors?: Record<string, string[]>
+  /**
+   * Failed validation rules (field => rules)
+   */
+  failedRules?: Record<string, string[]>
   /**
    * Allow dynamic properties for extensibility
    */

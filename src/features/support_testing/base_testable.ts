@@ -10,6 +10,7 @@ import Livewire from '../../livewire.js'
 import { ApplicationService, HttpRouterService } from '@adonisjs/core/types'
 import { Testable } from './testable.js'
 import { MakesAssertions } from './makes_assertions.js'
+import { TestsValidation } from '../support_validation/tests_validation.js'
 
 /**
  * Type helper to convert MakesAssertions methods to return ChainableTest
@@ -46,6 +47,8 @@ class ChainableTest implements PromiseLike<Testable> {
           'assertDontSeeHtml',
           'assertDispatched',
           'assertNotDispatched',
+          'assertHasErrors',
+          'assertHasNoErrors',
         ]
 
         const isAssertionMethod = assertionMethods.includes(prop as string)
@@ -163,7 +166,8 @@ class ChainableTest implements PromiseLike<Testable> {
 }
 
 // Add interface declaration to extend ChainableTest with MakesAssertions methods
-interface ChainableTest extends ChainableAssertions<MakesAssertions> {}
+interface ChainableTest
+  extends ChainableAssertions<MakesAssertions>, ChainableAssertions<TestsValidation> {}
 
 export class BaseTestable extends Macroable {
   #state: ComponentState

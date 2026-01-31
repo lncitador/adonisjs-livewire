@@ -254,6 +254,26 @@ export function HandlesValidation<T extends Constructor<BaseComponent>>(Base: T)
     }
 
     /**
+     * Clear validation errors for specific fields or all fields
+     * Alias for resetErrorBag
+     *
+     * @param fields - Optional field names to clear. If not provided, clears all errors
+     */
+    clearValidation(fields?: string | string[]): void {
+      this.resetErrorBag(fields)
+    }
+
+    /**
+     * Reset validation errors for specific fields or all fields
+     * Alias for resetErrorBag
+     *
+     * @param fields - Optional field names to reset. If not provided, resets all errors
+     */
+    resetValidation(fields?: string | string[]): void {
+      this.resetErrorBag(fields)
+    }
+
+    /**
      * Check if a specific field has errors
      *
      * @param field - Field name to check
