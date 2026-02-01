@@ -13,12 +13,14 @@ import { SupportRedirects } from '../src/features/support_redirects/support_redi
 import { SupportScriptsAndAssets } from '../src/features/support_scripts_and_assets/support_scripts_and_assets.js'
 import { SupportValidation } from '../src/features/support_validation/support_validation.js'
 import { SupportAutoInjectedAssets } from '../src/features/support_auto_injected_assets/support_auto_injected_assets.js'
+import { SupportFormObjects } from '../src/features/support_form_objects/support_form_objects.js'
 import { Config, defaultConfig } from '../src/define_config.js'
 import type Livewire from '../src/livewire.js'
 import { EventBus } from '../src/event_bus.js'
 import { ModelSynth } from '../src/synthesizers/model.js'
 import { ArraySynth } from '../src/synthesizers/array.js'
 import { DateSynth } from '../src/synthesizers/date.js'
+import { FormObjectSynth } from '../src/synthesizers/form_object.js'
 import debug from '../src/debug.js'
 
 const currentDirname = dirname(fileURLToPath(import.meta.url))
@@ -197,6 +199,7 @@ export default class LivewireProvider {
       SupportAutoInjectedAssets,
       SupportLazyLoading,
       SupportValidation,
+      SupportFormObjects,
     ]
 
     for (const feature of FEATURES) {
@@ -210,7 +213,7 @@ export default class LivewireProvider {
       }
     }
 
-    debug('registering property synthesizers: ModelSynth, ArraySynth, DateSynth')
-    Livewire.registerPropertySynthesizer([ModelSynth, ArraySynth, DateSynth])
+    debug('registering property synthesizers: ModelSynth, ArraySynth, DateSynth, FormObjectSynth')
+    Livewire.registerPropertySynthesizer([ModelSynth, ArraySynth, DateSynth, FormObjectSynth])
   }
 }

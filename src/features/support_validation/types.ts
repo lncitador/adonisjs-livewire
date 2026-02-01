@@ -2,29 +2,61 @@ import type { Infer, ConstructableSchema } from '@vinejs/vine/types'
 
 /**
  * Opaque type for validated properties
- * Similar to Lucid's HasMany, HasOne, etc.
- *
- * This type is used to mark properties that have validation rules
- * and allows TypeScript to infer the validated type.
- *
- * @example
- * ```typescript
- * class MyComponent extends Component {
- *   @validator(() => vine.string().minLength(3))
- *   declare name: HasValidate<string>
- * }
- * ```
  */
 export type HasValidate<T> = T & {
-  readonly __opaque_type: 'hasValidate'
-  readonly __validated_type: T
+  readonly __opaque_type?: 'hasValidate'
+  readonly __validated_type?: T
 }
+
+/**
+ * Check if a type is any
+ */
+type IsAny<T> = 0 extends 1 & T ? true : false
+
+/**
+ * Check if a type is a valid HasValidate candidate
+ * Excludes: any, functions, complex objects without the markers
+ */
+type IsValidHasValidateCandidate<T> =
+  IsAny<T> extends true
+    ? false
+    : T extends (...args: any[]) => any
+      ? false // Exclude functions
+      : T extends object
+        ? keyof T extends never
+          ? false // Exclude empty objects
+          : true
+        : true // Primitives are ok
+
+/**
+ * Check if a type has the HasValidate marker properties
+ * This checks if BOTH __opaque_type AND __validated_type are present in the type
+ * AND that the type is not 'any' or other invalid types
+ */
+/**
+ * Check if a type is exactly the markers we added (not inherited from base types)
+ * This is more strict - checks if __validated_type actually holds the validated type
+ */
+type IsHasValidate<T> =
+  IsAny<T> extends true
+    ? false
+    : T extends (...args: any[]) => any
+      ? false
+      : '__opaque_type' extends keyof T
+        ? '__validated_type' extends keyof T
+          ? T extends HasValidate<infer U>
+            ? U extends string | number | boolean | Date | Array<any> | null | undefined
+              ? true // Only allow primitives and simple types
+              : false
+            : false
+          : false
+        : false
 
 /**
  * Extract properties that have HasValidate type
  */
 export type ExtractValidatedProperties<Component> = {
-  [Key in keyof Component]: Component[Key] extends HasValidate<infer T> ? Key : never
+  [Key in keyof Component]: IsHasValidate<Component[Key]> extends true ? Key : never
 }[keyof Component]
 
 /**

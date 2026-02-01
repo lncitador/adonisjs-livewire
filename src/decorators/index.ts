@@ -13,6 +13,9 @@ import Validator from '../features/support_validation/validator.js'
 import type { HasValidate } from '../features/support_validation/types.js'
 import type { ConstructableSchema, Infer } from '@vinejs/vine/types'
 
+// Re-export form decorator from support_form_objects
+export { form } from '../features/support_form_objects/form_decorator.js'
+
 export function title(value: string) {
   return function (constructor: typeof Component) {
     constructor.prototype.addDecorator(new Title(value))
