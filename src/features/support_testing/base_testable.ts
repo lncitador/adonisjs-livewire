@@ -12,6 +12,7 @@ import { Testable } from './testable.js'
 import { MakesAssertions } from './makes_assertions.js'
 import { TestsValidation } from '../support_validation/tests_validation.js'
 import { TestsRedirects } from '../support_redirects/tests_redirects.js'
+import edge from 'edge.js'
 
 /**
  * Type helper to convert MakesAssertions methods to return ChainableTest
@@ -150,23 +151,28 @@ class ChainableTest implements PromiseLike<Testable> {
 
   // Terminal methods that return values (wrapped in promises)
   async get(propertyName: string): Promise<any> {
-    return this.get(propertyName)
+    const test = await this.promise
+    return test.get(propertyName)
   }
 
   async snapshot(): Promise<ComponentSnapshot> {
-    return this.snapshot()
+    const test = await this.promise
+    return test.snapshot()
   }
 
   async effects(): Promise<ComponentEffects> {
-    return this.effects()
+    const test = await this.promise
+    return test.effects()
   }
 
   async html(): Promise<string> {
-    return this.html()
+    const test = await this.promise
+    return test.html()
   }
 
   async instance(): Promise<Component> {
-    return this.instance()
+    const test = await this.promise
+    return test.instance()
   }
 }
 
@@ -205,6 +211,11 @@ export class BaseTestable extends Macroable {
       name: 'test-component',
     })
 
+    // Configure Edge renderer for template compilation
+    const renderer = 'clone' in ctx.view ? ctx.view.clone() : edge.createRenderer()
+    renderer.share(Livewire.generateComponentData(initialComponent))
+    initialComponent.view = renderer
+
     const initialSnapshot: ComponentSnapshot = {
       data: {},
       memo: {
@@ -224,8 +235,6 @@ export class BaseTestable extends Macroable {
 
     this.#features.push(...this.#createFeatures(initialComponent))
   }
-
-  static async create() {}
 
   get mountParams() {
     return this.#mountParams
@@ -349,6 +358,12 @@ export class BaseTestable extends Macroable {
     const component = this.state.getComponent()
     this.#componentContext.mounting = true
 
+    // Call boot and mount hooks on all features
+    for (const feature of this.#features) {
+      await feature.callBoot()
+      await feature.callMount(params[0] || {})
+    }
+
     if (this.hasMethod(component, 'mount')) {
       await (component as any).mount(...params)
     }
@@ -360,7 +375,22 @@ export class BaseTestable extends Macroable {
 
   async #executeSet(propertyName: string, value: any): Promise<this> {
     const component = this.state.getComponent() as any
-    component[propertyName] = value
+
+    // Handle nested properties like 'form.name'
+    if (propertyName.includes('.')) {
+      const parts = propertyName.split('.')
+      let target = component
+      for (let i = 0; i < parts.length - 1; i++) {
+        target = target[parts[i]]
+        if (target === undefined) {
+          throw new Error(`Property '${parts.slice(0, i + 1).join('.')}' is undefined`)
+        }
+      }
+      target[parts[parts.length - 1]] = value
+    } else {
+      component[propertyName] = value
+    }
+
     await this.#updateComponentState(component, this.#componentContext)
     return this
   }
@@ -387,12 +417,35 @@ export class BaseTestable extends Macroable {
     component: Component,
     componentContext: ComponentContext
   ): Promise<void> {
-    const html = await component.render()
+    let html = await component.render()
+
+    // Process the HTML through Edge to compile directives like @if, @foreach, etc.
+    // This mirrors PHP Livewire where Blade compiles the template
+    html = await component.view.renderRaw(html, this.#getComponentState(component))
+
     const livewire = await component.app.container.make('livewire')
     const snapshot = await livewire.snapshot(component, componentContext)
     const effects = componentContext.effects
 
     this.state.update(snapshot, effects, html)
+  }
+
+  /**
+   * Get component state for template rendering
+   */
+  #getComponentState(component: Component): Record<string, any> {
+    const state: Record<string, any> = {}
+
+    // Get all enumerable properties from the component
+    for (const key of Object.keys(component)) {
+      if (key.startsWith('_') || key.startsWith('#')) continue
+      const value = (component as any)[key]
+      if (typeof value !== 'function') {
+        state[key] = value
+      }
+    }
+
+    return state
   }
 
   #createFeatures(component: Component) {

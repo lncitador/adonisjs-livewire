@@ -26,9 +26,29 @@ export class ComponentState {
 
   /**
    * Get component property value
+   * Supports nested properties like 'form.name'
    */
   get(propertyName: string): any {
-    return this.snapshot.data[propertyName]
+    // First try from snapshot data
+    if (propertyName in this.snapshot.data) {
+      return this.snapshot.data[propertyName]
+    }
+
+    // Handle nested properties by accessing the component directly
+    if (propertyName.includes('.')) {
+      const parts = propertyName.split('.')
+      let target: any = this.component
+      for (const part of parts) {
+        if (target === undefined || target === null) {
+          return undefined
+        }
+        target = target[part]
+      }
+      return target
+    }
+
+    // Fallback to component property
+    return (this.component as any)[propertyName]
   }
 
   /**
