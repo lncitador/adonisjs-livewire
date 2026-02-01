@@ -10,7 +10,7 @@ import {
 } from '../../src/features/support_form_objects/utils.js'
 import { validator } from '../../src/decorators/index.js'
 import type { HasValidate } from '../../src/features/support_validation/types.js'
-import { Form } from '../../src/features/support_form_objects/form.js'
+import { Form } from '../../src/form.js'
 import {
   getFormClass,
   registerFormClass,

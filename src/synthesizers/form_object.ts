@@ -1,6 +1,6 @@
 import { Synth } from './synth.js'
 import { getFormClass } from '../features/support_form_objects/constants.js'
-import { Form } from '../features/support_form_objects/form.js'
+import { Form } from '../form.js'
 
 /**
  * FormObjectSynth - Synthesizer for Form objects

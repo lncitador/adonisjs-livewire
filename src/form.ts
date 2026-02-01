@@ -1,7 +1,8 @@
 import 'reflect-metadata'
-import { FORM_METHODS, registerFormClass } from './constants.js'
-import type { BaseComponent } from '../../base_component.js'
-import { Decorator } from '../support_decorators/decorator.js'
+import { FORM_METHODS, registerFormClass } from './features/support_form_objects/constants.js'
+import type { BaseComponent } from './base_component.js'
+import { Decorator } from './features/support_decorators/decorator.js'
+import { InferValidationReturnType } from './features/support_validation/types.js'
 
 /**
  * Error bag for storing validation errors
@@ -376,7 +377,7 @@ export abstract class Form {
    * Validate form - delegates to component's validation
    * Errors are stored in component's error bag with "formName.field" keys
    */
-  async validate(): Promise<Record<string, any>> {
+  async validate(): Promise<InferValidationReturnType<this>> {
     const component = this.#component as any
     const prefix = this.#propertyName
 
@@ -417,7 +418,7 @@ export abstract class Form {
         }
       }
 
-      return validated
+      return validated as InferValidationReturnType<this>
     } catch (error: any) {
       // Set errors with prefixed keys on component
       const currentErrors = component.getErrorBag?.() || {}
@@ -556,22 +557,24 @@ export abstract class Form {
   /**
    * Get all form data
    */
-  all(): Record<string, any> {
-    const data: Record<string, any> = {}
+  all(): InferValidationReturnType<this> {
+    const data = {}
     for (const key of this.getPropertyNames()) {
       data[key] = (this as any)[key]
     }
-    return data
+    return data as InferValidationReturnType<this>
   }
 
   /**
    * Get only specified fields
    */
-  only(keys: string[]): Record<string, any> {
-    const data: Record<string, any> = {}
+  only<K extends keyof InferValidationReturnType<this>>(
+    keys: K[]
+  ): Pick<InferValidationReturnType<this>, K> {
+    const data = {} as Pick<InferValidationReturnType<this>, K>
     for (const key of keys) {
-      if (this.hasProperty(key)) {
-        data[key] = (this as any)[key]
+      if (this.hasProperty(key as string)) {
+        ;(data as any)[key] = (this as any)[key]
       }
     }
     return data

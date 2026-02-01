@@ -1,5 +1,5 @@
 import ComponentHook from '../../component_hook.js'
-import { Form } from './form.js'
+import { Form } from '../../form.js'
 import { beforeFirstDot, afterFirstDot, ucfirst } from './utils.js'
 
 /**

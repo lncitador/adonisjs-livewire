@@ -1,7 +1,7 @@
 import 'reflect-metadata'
 import { registerFormClass } from './constants.js'
 import { Component } from '../../component.js'
-import { Form } from './form.js'
+import { Form } from '../../form.js'
 
 /**
  * Metadata key for form decorator
