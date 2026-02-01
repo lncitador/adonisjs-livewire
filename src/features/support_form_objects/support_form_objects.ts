@@ -1,6 +1,7 @@
 import ComponentHook from '../../component_hook.js'
 import { Form } from '../../form.js'
 import { beforeFirstDot, afterFirstDot, ucfirst } from './utils.js'
+import { getFormMetadata } from './form_decorator.js'
 
 /**
  * SupportFormObjects - Component hook for Form Objects
@@ -38,8 +39,12 @@ export class SupportFormObjects extends ComponentHook {
       const form = component[propertyName]
 
       if (form instanceof Form) {
+        // Check if already proxied (has component set) - skip re-initialization
+        if ((form as any).component !== undefined) continue
+
         // Set component reference
-        form.setComponent(component, propertyName)
+        const proxied = form.setComponent(component, propertyName)
+        component[propertyName] = proxied
 
         // Call boot hook if this is first time seeing this form class
         if (typeof form.boot === 'function') {
@@ -56,24 +61,32 @@ export class SupportFormObjects extends ComponentHook {
 
   /**
    * Get all property names that are Form instances
+   * Uses both metadata from @form() decorator and runtime check
    */
   private getFormPropertyNames(component: any): string[] {
-    const formProps: string[] = []
+    const formProps: Set<string> = new Set()
 
+    // First: Check metadata from @form() decorator
+    const formMetadata = getFormMetadata(component)
+    for (const meta of formMetadata) {
+      formProps.add(meta.propertyName)
+    }
+
+    // Second: Check Object.keys for runtime-defined forms
     for (const key of Object.keys(component)) {
       if (key.startsWith('_') || key.startsWith('#')) continue
 
       try {
         const value = component[key]
         if (value instanceof Form) {
-          formProps.push(key)
+          formProps.add(key)
         }
       } catch {
         // Skip properties that throw when accessed
       }
     }
 
-    return formProps
+    return [...formProps]
   }
 
   /**

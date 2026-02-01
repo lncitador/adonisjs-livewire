@@ -3,6 +3,9 @@ import { FORM_METHODS, registerFormClass } from './features/support_form_objects
 import type { BaseComponent } from './base_component.js'
 import { Decorator } from './features/support_decorators/decorator.js'
 import { InferValidationReturnType } from './features/support_validation/types.js'
+import { Component } from './component.js'
+import { HttpContext } from '@adonisjs/core/http'
+import { ApplicationService, HttpRouterService } from '@adonisjs/core/types'
 
 /**
  * Error bag for storing validation errors
@@ -14,6 +17,16 @@ export type ErrorBag = Record<string, string[]>
  * Symbol to store decorators on Form prototype
  */
 const DECORATORS_KEY = Symbol.for('livewire:form:decorators')
+
+/**
+ * Symbols for Form internal state
+ * Using symbols instead of private fields because Proxy changes `this` context
+ * and private fields only work with the original instance
+ */
+const FORM_COMPONENT = Symbol.for('livewire:form:component')
+const FORM_PROPERTY_NAME = Symbol.for('livewire:form:propertyName')
+const FORM_INITIAL_VALUES = Symbol.for('livewire:form:initialValues')
+const FORM_INITIAL_VALUES_STORED = Symbol.for('livewire:form:initialValuesStored')
 
 /**
  * Form base class for Form Objects
@@ -43,18 +56,44 @@ export abstract class Form {
    * Reference to the parent component
    * Set during initialization by SupportFormObjects
    */
-  #component?: BaseComponent
+  declare [FORM_COMPONENT]: BaseComponent | undefined;
 
   /**
    * Property name on the component
    * Set during initialization by SupportFormObjects
    */
-  #propertyName?: string
+  declare [FORM_PROPERTY_NAME]: string | undefined;
 
   /**
    * Initial property values for reset functionality
    */
-  #initialValues: Record<string, any> = {}
+  declare [FORM_INITIAL_VALUES]: Record<string, any>;
+
+  /**
+   * Track if initial values have been stored (to avoid re-capturing on hydrate)
+   */
+  declare [FORM_INITIAL_VALUES_STORED]: boolean
+
+  constructor() {
+    // Initialize symbol properties in constructor to ensure they exist on instance
+    this[FORM_INITIAL_VALUES] = {}
+    this[FORM_INITIAL_VALUES_STORED] = false
+  }
+
+  /**
+   * Get the HTTP context from the parent component
+   * Delegates to component.ctx for session, logger, etc.
+   */
+  get ctx(): HttpContext {
+    return this[FORM_COMPONENT]!.ctx
+  }
+
+  /**
+   * Get the application instance from the parent component
+   */
+  get app(): ApplicationService {
+    return this[FORM_COMPONENT]!.app
+  }
 
   /**
    * Get all decorators from prototype chain
@@ -112,9 +151,13 @@ export abstract class Form {
    * Set the component reference and return a proxied Form
    */
   setComponent(component: BaseComponent, propertyName: string): Form {
-    this.#component = component
-    this.#propertyName = propertyName
-    this.#storeInitialValues()
+    this[FORM_COMPONENT] = component
+    this[FORM_PROPERTY_NAME] = propertyName
+    // Only store initial values once (on first mount, not on hydrate)
+    if (!this[FORM_INITIAL_VALUES_STORED]) {
+      this.#storeInitialValues()
+      this[FORM_INITIAL_VALUES_STORED] = true
+    }
     this.#registerDecoratorsOnComponent()
 
     return this.#createProxy()
@@ -124,16 +167,31 @@ export abstract class Form {
    * Create a Proxy that delegates to the Component for validation methods
    */
   #createProxy(): Form {
-    const component = this.#component
-    const propertyName = this.#propertyName
+    const formInstance = this
+    const component = this[FORM_COMPONENT]
+    const propertyName = this[FORM_PROPERTY_NAME]
 
     return new Proxy(this, {
-      get(proxyTarget: Form, prop: string | symbol) {
-        // Handle symbols
+      get(proxyTarget: Form, prop: string | symbol, receiver) {
+        // Handle internal symbols - always access from formInstance
+        if (prop === FORM_COMPONENT) {
+          return formInstance[FORM_COMPONENT]
+        }
+        if (prop === FORM_PROPERTY_NAME) {
+          return formInstance[FORM_PROPERTY_NAME]
+        }
+        if (prop === FORM_INITIAL_VALUES) {
+          return formInstance[FORM_INITIAL_VALUES]
+        }
+        if (prop === FORM_INITIAL_VALUES_STORED) {
+          return formInstance[FORM_INITIAL_VALUES_STORED]
+        }
+
+        // Handle other symbols
         if (typeof prop === 'symbol') {
           const value = (proxyTarget as any)[prop]
           if (value !== undefined) {
-            return typeof value === 'function' ? value.bind(proxyTarget) : value
+            return typeof value === 'function' ? value.bind(formInstance) : value
           }
           if (component) {
             const componentValue = (component as any)[prop]
@@ -159,7 +217,7 @@ export abstract class Form {
         if (Object.prototype.hasOwnProperty.call(proxyTarget, prop)) {
           const value = (proxyTarget as any)[prop]
           if (value !== undefined) {
-            return typeof value === 'function' ? value.bind(proxyTarget) : value
+            return typeof value === 'function' ? value.bind(formInstance) : value
           }
         }
 
@@ -167,7 +225,7 @@ export abstract class Form {
         if (prop in proxyTarget) {
           const value = (proxyTarget as any)[prop]
           if (value !== undefined) {
-            return typeof value === 'function' ? value.bind(proxyTarget) : value
+            return typeof value === 'function' ? value.bind(formInstance) : value
           }
         }
 
@@ -175,7 +233,7 @@ export abstract class Form {
         if (FORM_METHODS.has(prop)) {
           const value = (proxyTarget as any)[prop]
           if (typeof value === 'function') {
-            return value.bind(proxyTarget)
+            return value.bind(formInstance)
           }
           return value
         }
@@ -187,11 +245,11 @@ export abstract class Form {
             const descriptor = Object.getOwnPropertyDescriptor(prototype, prop)
             if (descriptor) {
               if (descriptor.get || descriptor.set) {
-                const value = descriptor.get ? descriptor.get.call(proxyTarget) : undefined
-                return typeof value === 'function' ? value.bind(proxyTarget) : value
+                const value = descriptor.get ? descriptor.get.call(formInstance) : undefined
+                return typeof value === 'function' ? value.bind(formInstance) : value
               }
               if (typeof descriptor.value === 'function') {
-                return descriptor.value.bind(proxyTarget)
+                return descriptor.value.bind(formInstance)
               }
               return descriptor.value
             }
@@ -202,8 +260,10 @@ export abstract class Form {
         // Delegate to component for validation methods
         if (component) {
           const componentValue = (component as any)[prop]
-          if (componentValue !== undefined && typeof componentValue === 'function') {
-            return componentValue.bind(component)
+          if (componentValue !== undefined) {
+            return typeof componentValue === 'function'
+              ? componentValue.bind(component)
+              : componentValue
           }
         }
 
@@ -222,9 +282,13 @@ export abstract class Form {
           return false
         }
 
-        // Set on form if property exists
+        // Set on form if property exists OR if property is declared with @validator decorator
         const existsInForm = Object.prototype.hasOwnProperty.call(proxyTarget, prop)
-        if (existsInForm) {
+        const decorators = proxyTarget.getDecorators()
+        const isDecoratedProperty = decorators.some(
+          (d) => (d as any).propertyName === prop || (d as any).property === prop
+        )
+        if (existsInForm || isDecoratedProperty) {
           ;(proxyTarget as any)[prop] = value
           return true
         }
@@ -292,11 +356,11 @@ export abstract class Form {
    * This allows the Component's validation system to validate form properties
    */
   #registerDecoratorsOnComponent(): void {
-    if (!this.#component || !this.#propertyName) return
+    if (!this[FORM_COMPONENT] || !this[FORM_PROPERTY_NAME]) return
 
     const formDecorators = this.getDecorators()
-    const component = this.#component as any
-    const prefix = this.#propertyName
+    const component = this[FORM_COMPONENT] as any
+    const prefix = this[FORM_PROPERTY_NAME]
 
     for (const decorator of formDecorators) {
       // Clone decorator with prefixed property name for component
@@ -319,14 +383,14 @@ export abstract class Form {
    * Get the parent component
    */
   getComponent(): BaseComponent | undefined {
-    return this.#component
+    return this[FORM_COMPONENT]
   }
 
   /**
    * Get the property name on the component
    */
   getPropertyName(): string | undefined {
-    return this.#propertyName
+    return this[FORM_PROPERTY_NAME]
   }
 
   /**
@@ -334,22 +398,34 @@ export abstract class Form {
    */
   #storeInitialValues(): void {
     for (const key of this.getPropertyNames()) {
-      this.#initialValues[key] = (this as any)[key]
+      this[FORM_INITIAL_VALUES][key] = (this as any)[key]
     }
   }
 
   /**
    * Get all form property names
+   * Uses decorators and own properties
    */
   getPropertyNames(): string[] {
-    const props: string[] = []
+    const props: Set<string> = new Set()
+
+    // First: get properties from @validator decorators
+    const decorators = this.getDecorators()
+    for (const decorator of decorators) {
+      if ('propertyName' in decorator) {
+        props.add(decorator.propertyName as string)
+      }
+    }
+
+    // Second: get own enumerable properties
     for (const key of Object.keys(this)) {
       if (key.startsWith('_') || key.startsWith('#')) continue
       if (FORM_METHODS.has(key)) continue
       if (typeof (this as any)[key] === 'function') continue
-      props.push(key)
+      props.add(key)
     }
-    return props
+
+    return [...props]
   }
 
   /**
@@ -378,8 +454,8 @@ export abstract class Form {
    * Errors are stored in component's error bag with "formName.field" keys
    */
   async validate(): Promise<InferValidationReturnType<this>> {
-    const component = this.#component as any
-    const prefix = this.#propertyName
+    const component = this[FORM_COMPONENT] as any
+    const prefix = this[FORM_PROPERTY_NAME]
 
     if (!component || !prefix) {
       throw new Error('Form must be attached to a component before validation')
@@ -481,8 +557,8 @@ export abstract class Form {
    * Get errors for form fields from component's error bag
    */
   getErrorBag(): ErrorBag {
-    const component = this.#component as any
-    const prefix = this.#propertyName
+    const component = this[FORM_COMPONENT] as any
+    const prefix = this[FORM_PROPERTY_NAME]
 
     if (!component || !prefix || typeof component.getErrorBag !== 'function') {
       return {}
@@ -505,8 +581,8 @@ export abstract class Form {
    * Reset error bag for form fields
    */
   resetErrorBag(fields?: string | string[]): void {
-    const component = this.#component as any
-    const prefix = this.#propertyName
+    const component = this[FORM_COMPONENT] as any
+    const prefix = this[FORM_PROPERTY_NAME]
 
     if (!component || !prefix || typeof component.resetErrorBag !== 'function') {
       return
@@ -528,8 +604,8 @@ export abstract class Form {
    * Add error for a form field
    */
   addError(field: string, message: string): void {
-    const component = this.#component as any
-    const prefix = this.#propertyName
+    const component = this[FORM_COMPONENT] as any
+    const prefix = this[FORM_PROPERTY_NAME]
 
     if (!component || !prefix || typeof component.addError !== 'function') {
       return
@@ -612,15 +688,15 @@ export abstract class Form {
   reset(fields?: string | string[]): this {
     if (!fields) {
       for (const key of this.getPropertyNames()) {
-        if (key in this.#initialValues) {
-          ;(this as any)[key] = this.#initialValues[key]
+        if (key in this[FORM_INITIAL_VALUES]) {
+          ;(this as any)[key] = this[FORM_INITIAL_VALUES][key]
         }
       }
     } else {
       const fieldArray = Array.isArray(fields) ? fields : [fields]
       for (const key of fieldArray) {
-        if (key in this.#initialValues) {
-          ;(this as any)[key] = this.#initialValues[key]
+        if (key in this[FORM_INITIAL_VALUES]) {
+          ;(this as any)[key] = this[FORM_INITIAL_VALUES][key]
         }
       }
     }
@@ -633,8 +709,8 @@ export abstract class Form {
   resetExcept(keys: string[]): this {
     const excludeSet = new Set(keys)
     for (const key of this.getPropertyNames()) {
-      if (!excludeSet.has(key) && key in this.#initialValues) {
-        ;(this as any)[key] = this.#initialValues[key]
+      if (!excludeSet.has(key) && key in this[FORM_INITIAL_VALUES]) {
+        ;(this as any)[key] = this[FORM_INITIAL_VALUES][key]
       }
     }
     return this
@@ -645,8 +721,8 @@ export abstract class Form {
    */
   pull(key: string): any {
     const value = (this as any)[key]
-    if (key in this.#initialValues) {
-      ;(this as any)[key] = this.#initialValues[key]
+    if (key in this[FORM_INITIAL_VALUES]) {
+      ;(this as any)[key] = this[FORM_INITIAL_VALUES][key]
     }
     return value
   }
@@ -665,3 +741,5 @@ export abstract class Form {
     registerFormClass(constructor.name, constructor)
   }
 }
+
+export interface Form extends Component {}
