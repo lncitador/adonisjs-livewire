@@ -912,7 +912,7 @@ export default class Livewire {
       context.addEffect('dispatches', s.get('dispatched'))
     }
 
-    let snapshot: ComponentSnapshot = {
+    let snapshot: Omit<ComponentSnapshot, 'checksum'> = {
       data: data,
       memo: {
         id: component.getId(),
@@ -927,12 +927,12 @@ export default class Livewire {
         locale: 'en',
         ...context.memo,
       },
-      checksum: '',
     }
 
-    snapshot.checksum = this.checksum.generate(snapshot)
+    const finalSnapshot = snapshot as ComponentSnapshot
+    finalSnapshot.checksum = this.checksum.generate(snapshot)
 
-    return snapshot
+    return finalSnapshot
   }
 
   protected async updateProperties(
