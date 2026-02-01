@@ -6,6 +6,8 @@
     "resolveJsonModule": true,
     "noImplicitAny": false,
     "noUnusedParameters": false,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   }
 }
