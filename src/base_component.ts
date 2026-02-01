@@ -10,12 +10,28 @@ export class BaseComponent {
   #viewPath!: string
   #view!: ReturnType<Edge['createRenderer']>
   #viewData: Record<string, any> = {}
+  #router!: HttpRouterService
 
   declare bindings: any
 
   declare app: ApplicationService
   declare ctx: HttpContext
-  declare router: HttpRouterService
+
+  /**
+   * Internal method to set router - not exposed to end users
+   * @internal
+   */
+  __setRouter(router: HttpRouterService): void {
+    this.#router = router
+  }
+
+  /**
+   * Internal method to get router - not exposed to end users
+   * @internal
+   */
+  __getRouter(): HttpRouterService {
+    return this.#router
+  }
 
   // Getters & Setters for controlled access
   get __id(): string {

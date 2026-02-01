@@ -19,9 +19,10 @@ export function HandlesRedirects<T extends Constructor<BaseComponent>>(Base: T) 
     }
 
     redirectRoute(name: string, params?: Record<string, any>, navigate: boolean = false) {
-      if (!this.router.commited) this.router.commit()
+      const router = this.__getRouter()
+      if (!router.commited) router.commit()
 
-      const url = this.router.makeUrl(name, params)
+      const url = router.makeUrl(name, params)
 
       this.redirect(url, navigate)
     }

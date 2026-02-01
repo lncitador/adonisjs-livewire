@@ -96,16 +96,17 @@ export function TestsRedirects<TConstructor extends Constructor<BaseTestable>>(B
       // Get the router from the component instance to generate the URL
       const component = this.state.getComponent() as any
 
-      if (!component.router) {
+      const router = component.__getRouter?.()
+      if (!router) {
         throw new Error('Router not available on component for route URL generation')
       }
 
       // Commit the router if not already committed
-      if (!component.router.committed) {
-        component.router.commit()
+      if (!router.committed) {
+        router.commit()
       }
 
-      const uri = component.router.makeUrl(name, params)
+      const uri = router.makeUrl(name, params)
 
       return this.assertRedirect(uri)
     }

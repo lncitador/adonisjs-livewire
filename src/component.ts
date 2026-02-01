@@ -34,6 +34,6 @@ export abstract class Component extends compose(
     this.__name = name
     this.app = app
     this.ctx = ctx
-    this.router = router
+    this.__setRouter(router)
   }
 }
