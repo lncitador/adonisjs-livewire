@@ -1,6 +1,6 @@
 import { type HttpContext } from '@adonisjs/core/http'
-import { HttpContextFactory } from '@adonisjs/core/factories/http'
-import { type ApplicationService } from '@adonisjs/core/types'
+import { HttpContextFactory, RouterFactory } from '@adonisjs/core/factories/http'
+import { type ApplicationService, type HttpRouterService } from '@adonisjs/core/types'
 
 import { defineConfig, type Config, type PartialConfig } from '../src/define_config.js'
 import Livewire from '../src/livewire.js'
@@ -14,6 +14,8 @@ type FactoryParameters = {
   ctx: HttpContext
   /** Application service instance */
   app: ApplicationService
+  /** HTTP router service */
+  router: HttpRouterService
   /** Livewire configuration object */
   config: Config
 }
@@ -44,9 +46,10 @@ export class LivewireFactory {
    * const factory = new LivewireFactory(app, { injectAssets: false })
    * ```
    */
-  constructor(app: ApplicationService, config?: Config) {
+  constructor(app: ApplicationService, config?: Config, router?: HttpRouterService) {
     this.#parameters.app = app
     this.#parameters.config = config || defineConfig({})
+    this.#parameters.router = router || new RouterFactory().create()
     this.#parameters.ctx = new HttpContextFactory().create()
 
     this.#parameters.ctx.request.request.headers[LivewireHeaders.Livewire] = '1'
@@ -66,7 +69,7 @@ export class LivewireFactory {
    * ```
    */
   merge(
-    parameters: Omit<Partial<FactoryParameters>, 'config'> & {
+    parameters: Omit<Partial<FactoryParameters>, 'config' | 'app'> & {
       config?: PartialConfig
     }
   ) {
@@ -74,10 +77,6 @@ export class LivewireFactory {
       this.#parameters.ctx = parameters.ctx
 
       this.#parameters.ctx.request.request.headers[LivewireHeaders.Livewire] = '1'
-    }
-
-    if (parameters.app) {
-      this.#parameters.app = parameters.app
     }
 
     if (parameters.config) {
@@ -137,7 +136,7 @@ export class LivewireFactory {
    * ```
    */
   create(): Livewire {
-    return new Livewire(this.#parameters.app, this.#parameters.config)
+    return new Livewire(this.#parameters.app, this.#parameters.router, this.#parameters.config)
   }
 
   /**

@@ -1,4 +1,4 @@
-import { ApplicationService } from '@adonisjs/core/types'
+import { ApplicationService, HttpRouterService } from '@adonisjs/core/types'
 import { HttpContext, errors } from '@adonisjs/core/http'
 import string from '@adonisjs/core/helpers/string'
 import { Component } from './component.js'
@@ -25,20 +25,51 @@ import type {
   ComponentHookConstructor,
   ComponentConstructor,
 } from './types.js'
+import { Testable } from './features/support_testing/testable.js'
+import { HttpContextFactory } from '@adonisjs/http-server/factories'
 import { isSyntheticTuple } from './utils/synthetic.js'
 import { insertAttributesIntoHtmlRoot as insertAttributesIntoHtml } from './utils/html.js'
 import { extractComponentParts } from './utils/component.js'
 
 export default class Livewire {
   app: ApplicationService
+  router: HttpRouterService
   config: Config
   components = new Map<string, ComponentConstructor>()
   checksum: Checksum
   static FEATURES: ComponentHookConstructor[] = []
   static PROPERTY_SYNTHESIZERS: Array<typeof Synth> = []
 
-  constructor(app: ApplicationService, config: Config) {
+  /**
+   * Testing state - query params to pass to test context
+   */
+  #queryParamsForTesting: Record<string, any> = {}
+
+  /**
+   * Testing state - cookies to pass to test context
+   */
+  #cookiesForTesting: Record<string, string> = {}
+
+  /**
+   * Testing state - headers to pass to test context
+   */
+  #headersForTesting: Record<string, string> = {}
+
+  /**
+   * Testing state - whether lazy loading is disabled
+   */
+  #disableLazyLoading = false
+
+  /**
+   * Testing state - authenticated user for tests
+   */
+  #actingAsUser: { user: any; guard?: string } | null = null
+
+  #ctxForTesting: HttpContext | null = null
+
+  constructor(app: ApplicationService, router: HttpRouterService, config: Config) {
     this.app = app
+    this.router = router
     this.config = config
 
     const appKey = this.app.config.get<string | Secret<string>>('app.appKey', 'appKey')
@@ -117,6 +148,183 @@ export default class Livewire {
     }
 
     return false
+  }
+
+  /**
+   * Set query params for testing
+   * PHP parity: withQueryParams($params)
+   *
+   * @example
+   * ```ts
+   * await Livewire
+   *   .withQueryParams({ page: 1, sort: 'name' })
+   *   .test(SearchComponent)
+   *   .mount()
+   * ```
+   */
+  withQueryParams(params: Record<string, any>): this {
+    this.#queryParamsForTesting = params
+    return this
+  }
+
+  /**
+   * Set a cookie for testing
+   * PHP parity: withCookie($name, $value)
+   */
+  withCookie(name: string, value: string): this {
+    this.#cookiesForTesting[name] = value
+    return this
+  }
+
+  /**
+   * Set cookies for testing
+   * PHP parity: withCookies($cookies)
+   *
+   * @example
+   * ```ts
+   * await Livewire
+   *   .withCookies({ session_id: 'abc123' })
+   *   .test(MyComponent)
+   *   .mount()
+   * ```
+   */
+  withCookies(cookies: Record<string, string>): this {
+    this.#cookiesForTesting = { ...this.#cookiesForTesting, ...cookies }
+    return this
+  }
+
+  /**
+   * Set headers for testing
+   * PHP parity: withHeaders($headers)
+   *
+   * @example
+   * ```ts
+   * await Livewire
+   *   .withHeaders({ 'Accept-Language': 'pt-BR' })
+   *   .test(MyComponent)
+   *   .mount()
+   * ```
+   */
+  withHeaders(headers: Record<string, string>): this {
+    this.#headersForTesting = { ...this.#headersForTesting, ...headers }
+    return this
+  }
+
+  /**
+   * Disable lazy loading for testing
+   * PHP parity: withoutLazyLoading()
+   *
+   * @example
+   * ```ts
+   * await Livewire
+   *   .withoutLazyLoading()
+   *   .test(LazyComponent)
+   *   .mount()
+   * ```
+   */
+  withoutLazyLoading(): this {
+    this.#disableLazyLoading = true
+    return this
+  }
+
+  withHttpContext(ctx: HttpContext): this {
+    this.#ctxForTesting = ctx
+    return this
+  }
+
+  /**
+   * Set the authenticated user for testing
+   * PHP parity: actingAs($user, $driver = null)
+   *
+   * @example
+   * ```ts
+   * const user = await User.find(1)
+   * await Livewire
+   *   .actingAs(user)
+   *   .test(ProfileComponent)
+   *   .mount()
+   * ```
+   */
+  actingAs(user: any, guard?: string): this {
+    this.#actingAsUser = { user, guard }
+    return this
+  }
+
+  /**
+   * Reset testing state
+   * Called internally after test() to clean up
+   */
+  #resetTestingState(): void {
+    this.#queryParamsForTesting = {}
+    this.#cookiesForTesting = {}
+    this.#headersForTesting = {}
+    this.#disableLazyLoading = false
+    this.#actingAsUser = null
+  }
+
+  /**
+   * Test a Livewire component
+   * PHP parity: Livewire::test($name, $params = [])
+   *
+   * Creates a Testable instance for fluent testing of components.
+   *
+   * @example
+   * ```ts
+   * import Livewire from 'adonisjs-livewire/services/main'
+   * import Counter from '#livewire/counter'
+   *
+   * await Livewire.test(Counter)
+   *   .mount()
+   *   .call('increment')
+   *   .assertSet('count', 1)
+   * ```
+   */
+  test(componentClass: ComponentConstructor): Testable {
+    debug('test: preparing testable for component %s', componentClass.name)
+
+    const ctx = this.#ctxForTesting || new HttpContextFactory().create()
+
+    // Apply query params to request
+    if (Object.keys(this.#queryParamsForTesting).length > 0) {
+      for (const [key, value] of Object.entries(this.#queryParamsForTesting)) {
+        ctx.request.updateQs({ [key]: value })
+      }
+    }
+
+    // Apply headers to request
+    if (Object.keys(this.#headersForTesting).length > 0) {
+      for (const [key, value] of Object.entries(this.#headersForTesting)) {
+        ctx.request.request.headers[key.toLowerCase()] = value
+      }
+    }
+
+    // Apply cookies to request
+    // Note: cookies handling depends on session/cookie implementation
+
+    // Handle authenticated user
+    if (this.#actingAsUser) {
+      const { user, guard } = this.#actingAsUser
+      // Auth is optional and may not be configured
+      const auth = (ctx as any).auth
+      if (auth) {
+        auth.use(guard).login(user)
+      }
+    }
+
+    // Capture state before reset
+    const disableLazyLoading = this.#disableLazyLoading
+
+    // Reset testing state for next test
+    this.#resetTestingState()
+
+    const testable = new Testable(componentClass, this.app, this.router, ctx)
+
+    // Apply lazy loading setting
+    if (disableLazyLoading) {
+      // TODO: Implement lazy loading disable on testable
+    }
+
+    return testable
   }
 
   /**

@@ -68,7 +68,7 @@ export default class LivewireProvider {
     const { edgePluginLivewire } = await import('../src/plugins/edge/plugin.js')
 
     const config = this.app.config.get<Config>('livewire', defaultConfig)
-    const livewire = new Livewire(app, config)
+    const livewire = new Livewire(app, router, config)
 
     this.app.container.singleton('livewire', () => {
       return livewire
