@@ -3,6 +3,11 @@ export const defaultConfig = {
   layout: 'components.layouts.main',
   injectAssets: true,
   renderOnRedirect: false,
+  /**
+   * Default placeholder view for lazy loaded components
+   * Example: 'placeholders/skeleton' or null for default <div></div>
+   */
+  componentPlaceholder: null as string | null,
   navigate: {
     showProgressBar: true,
     progressBarColor: '#2299dd',
@@ -33,6 +38,7 @@ export type PartialConfig = {
   layout?: string
   injectAssets?: boolean
   renderOnRedirect?: boolean
+  componentPlaceholder?: string | null
   navigate?: Partial<Config['navigate']>
   limits?: Partial<Config['limits']>
 }
