@@ -41,9 +41,10 @@ export default class Livewire {
     this.app = app
     this.config = config
 
-    const secret = new Secret(this.app.config.get<string>('app.appKey', 'appKey'))
+    const appKey = this.app.config.get<string | Secret<string>>('app.appKey', 'appKey')
+    const key = appKey instanceof Secret ? appKey.release() : appKey
 
-    this.checksum = new Checksum(secret.release())
+    this.checksum = new Checksum(key)
   }
 
   static componentHook(feature: ComponentHookConstructor) {

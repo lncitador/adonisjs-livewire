@@ -14,21 +14,6 @@ export type HasValidate<T> = T & {
 type IsAny<T> = 0 extends 1 & T ? true : false
 
 /**
- * Check if a type is a valid HasValidate candidate
- * Excludes: any, functions, complex objects without the markers
- */
-type IsValidHasValidateCandidate<T> =
-  IsAny<T> extends true
-    ? false
-    : T extends (...args: any[]) => any
-      ? false // Exclude functions
-      : T extends object
-        ? keyof T extends never
-          ? false // Exclude empty objects
-          : true
-        : true // Primitives are ok
-
-/**
  * Check if a type has the HasValidate marker properties
  * This checks if BOTH __opaque_type AND __validated_type are present in the type
  * AND that the type is not 'any' or other invalid types
