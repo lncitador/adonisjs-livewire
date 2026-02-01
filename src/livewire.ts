@@ -7,7 +7,6 @@ import { DataStore, getLivewireContext, livewireContext, store } from './store.j
 import { Checksum } from './checksum.js'
 import Layout from './features/support_page_components/layout.js'
 import Computed from './features/support_computed/computed.js'
-import { SupportLazyLoading } from './features/support_lazy_loading/support_lazy_loading.js'
 import { Secret } from '@adonisjs/core/helpers'
 import type { Config } from './define_config.js'
 import { EventBus } from './event_bus.js'
@@ -908,6 +907,9 @@ export default class Livewire {
     // Add internal dispatch methods
     methods.push('__dispatch')
     methods.push('__lazyLoad')
+    methods.push('$refresh')
+    methods.push('$commit')
+    methods.push('$set')
 
     return methods
   }
@@ -952,11 +954,23 @@ export default class Livewire {
           earlyReturn = returnVal
         }
 
-        const finish = await this.trigger('call', component, method, params, context, returnEarly)
+        const callbacks = await this.trigger(
+          'call',
+          component,
+          method,
+          params,
+          context,
+          returnEarly
+        )
 
         if (earlyReturnCalled) {
-          //@ts-ignore
-          returns.push(await finish(earlyReturn))
+          // Execute all callbacks returned by hooks
+          for (const callback of callbacks) {
+            if (typeof callback === 'function') {
+              await callback(earlyReturn)
+            }
+          }
+          returns.push(earlyReturn)
 
           continue
         }
@@ -966,11 +980,24 @@ export default class Livewire {
           let result = await features[1].callCall('__dispatch', params, returnEarly)
           returns.push(result)
         } else if (method === '__lazyLoad') {
-          const feature = getLivewireContext()!.features.find(
-            (f) => f instanceof SupportLazyLoading
-          ) as SupportLazyLoading
-          let result = await feature.callCall('__lazyLoad', params, returnEarly)
-          returns.push(result)
+          // Handled by SupportLazyLoading via trigger('call', ...) above
+          // If we reach here, returnEarly wasn't called - just push null
+          returns.push(null)
+        } else if (method === '$refresh') {
+          // $refresh is a special method that just triggers a re-render
+          // No actual method call needed - the component will be re-rendered at the end of the request
+          returns.push(null)
+        } else if (method === '$commit') {
+          // $commit is similar to $refresh - just triggers a re-render
+          returns.push(null)
+        } else if (method === '$set') {
+          // $set(property, value) - sets a property value
+          const [property, value] = params
+          if (property in component) {
+            //@ts-ignore
+            component[property] = value
+          }
+          returns.push(null)
         } else {
           //@ts-ignore
           let result = await component[method](...params)
