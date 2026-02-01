@@ -60,12 +60,13 @@ export async function setupApp(providers: ProviderNode[] = []) {
         livewire: defineConfig({}),
       },
       rcFileContents: {
-        providers: providers.concat([
+        providers: [
           {
             file: () => import('@adonisjs/core/providers/edge_provider'),
             environment: ['test', 'web'],
           },
-        ]),
+          ...providers,
+        ],
       },
     })
     .create(BASE_URL, {
@@ -87,7 +88,7 @@ export async function setupApp(providers: ProviderNode[] = []) {
   return { ace, app, ignitor, router }
 }
 
-export const setupFakeAdonisProject = test.macro(async ($test) => {
+export async function setupFakeAdonisProjectWithoutMacro($test: Test) {
   const adonisrc = [
     "import { defineConfig } from '@adonisjs/core/app'",
     '',
@@ -137,6 +138,7 @@ export const setupFakeAdonisProject = test.macro(async ($test) => {
         forceConsistentCasingInFileNames: true,
         strictPropertyInitialization: true,
         experimentalDecorators: true,
+        emitDecoratorMetadata: true,
         noImplicitAny: true,
         strictBindCallApply: true,
         strictFunctionTypes: true,
@@ -155,4 +157,6 @@ export const setupFakeAdonisProject = test.macro(async ($test) => {
     $test.context.fs.create('vite.config.ts', `export default { plugins: [] }`),
     $test.context.fs.create('start/kernel.ts', kernel),
   ])
-})
+}
+
+export const setupFakeAdonisProject = test.macro(setupFakeAdonisProjectWithoutMacro)

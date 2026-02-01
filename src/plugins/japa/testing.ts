@@ -30,7 +30,7 @@ export interface LivewireTestingHelper {
 /**
  * Internal livewire testing helper class
  */
-class LivewireHelper implements LivewireTestingHelper {
+export class LivewireHelper implements LivewireTestingHelper {
   #app: ApplicationService
   #router: HttpRouterService
   #ctx: HttpContext
