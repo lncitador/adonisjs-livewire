@@ -83,7 +83,7 @@ test.group('SupportLazyLoading', () => {
         assert.isTrue(store(component).has('skipMount'))
         assert.isTrue(store(component).has('skipRender'))
         assert.isTrue(store(component).get('isLazyLoadMounting'))
-        assert.isFalse(store(component).get('isLazyIsolated'))
+        assert.isTrue(store(component).get('isLazyIsolated')) // isolate=true by default (PHP parity)
       }
     )
   })
