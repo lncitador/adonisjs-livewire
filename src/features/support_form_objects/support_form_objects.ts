@@ -2,22 +2,19 @@ import ComponentHook from '../../component_hook.js'
 import { Form } from '../../form.js'
 import { beforeFirstDot, afterFirstDot, ucfirst } from './utils.js'
 import { getFormMetadata } from './form_decorator.js'
+import debug from '../../debug.js'
 
 /**
- * SupportFormObjects - Component hook for Form Objects
- * PHP parity: SupportFormObjects
- *
- * This hook manages Form object lifecycle on components:
- * - Auto-initializes Form properties on mount
- * - Handles property update lifecycle (updating/updated hooks on forms)
- * - Sets component reference on form objects
+ * Symbol to track if a Form has been booted
  */
+const FORM_BOOTED = Symbol.for('livewire:form:booted')
+
 export class SupportFormObjects extends ComponentHook {
   /**
    * Called during component initialization (mount)
-   * Initializes all Form properties on the component
    */
   async mount(params: any): Promise<void> {
+    debug('SupportFormObjects.mount: calling initializeFormObjects')
     await this.initializeFormObjects()
   }
 
@@ -25,61 +22,101 @@ export class SupportFormObjects extends ComponentHook {
    * Called during hydration (subsequent requests)
    */
   async hydrate(): Promise<void> {
+    debug('SupportFormObjects.hydrate: calling initializeFormObjects')
     await this.initializeFormObjects()
   }
 
   /**
    * Initialize all Form object properties on the component
-   * PHP parity: initializeFormObjects
    */
   private async initializeFormObjects(): Promise<void> {
     const component = this.component as any
+    const formProps = this.getFormPropertyNames(component)
 
-    for (const propertyName of this.getFormPropertyNames(component)) {
+    debug(
+      'SupportFormObjects.initializeFormObjects: found %d form properties: %O',
+      formProps.length,
+      formProps
+    )
+
+    for (const propertyName of formProps) {
       const form = component[propertyName]
 
-      if (form instanceof Form) {
-        // Check if already proxied (has component set) - skip re-initialization
-        if ((form as any).component !== undefined) continue
+      debug(
+        'SupportFormObjects: checking property "%s", instanceof Form: %s',
+        propertyName,
+        form instanceof Form
+      )
 
-        // Set component reference
-        const proxied = form.setComponent(component, propertyName)
+      if (form instanceof Form) {
+        const wasBooted = (form as any)[FORM_BOOTED] === true
+
+        debug('SupportFormObjects: initializing form "%s" (wasBooted: %s)', propertyName, wasBooted)
+
+        // ALWAYS set component reference and create Proxy
+        const proxied: any = form.setComponent(component, propertyName)
         component[propertyName] = proxied
 
-        // Call boot hook if this is first time seeing this form class
-        if (typeof form.boot === 'function') {
+        debug(
+          'SupportFormObjects: proxied form "%s", typeof store: %s',
+          propertyName,
+          typeof proxied.store
+        )
+
+        // Call boot hook only ONCE
+        if (!wasBooted && typeof form.boot === 'function') {
+          debug('SupportFormObjects: calling boot() on form "%s"', propertyName)
           await form.boot()
+          ;(form as any)[FORM_BOOTED] = true
         }
 
         // Call mount hook
         if (typeof form.mount === 'function') {
+          debug('SupportFormObjects: calling mount() on form "%s"', propertyName)
           await form.mount()
         }
+      } else {
+        debug(
+          'SupportFormObjects: property "%s" is NOT a Form instance (type: %s)',
+          propertyName,
+          typeof form
+        )
       }
     }
   }
 
   /**
    * Get all property names that are Form instances
-   * Uses both metadata from @form() decorator and runtime check
    */
   private getFormPropertyNames(component: any): string[] {
     const formProps: Set<string> = new Set()
 
     // First: Check metadata from @form() decorator
     const formMetadata = getFormMetadata(component)
+    debug(
+      'SupportFormObjects.getFormPropertyNames: found %d form metadata entries',
+      formMetadata.length
+    )
     for (const meta of formMetadata) {
       formProps.add(meta.propertyName)
+      debug('SupportFormObjects.getFormPropertyNames: added "%s" from metadata', meta.propertyName)
     }
 
     // Second: Check Object.keys for runtime-defined forms
-    for (const key of Object.keys(component)) {
+    const ownKeys = Object.keys(component)
+    debug('SupportFormObjects.getFormPropertyNames: checking %d own keys', ownKeys.length)
+
+    for (const key of ownKeys) {
       if (key.startsWith('_') || key.startsWith('#')) continue
 
       try {
         const value = component[key]
         if (value instanceof Form) {
           formProps.add(key)
+          debug(
+            'SupportFormObjects.getFormPropertyNames: added "%s" from own keys (instanceof Form)',
+            key
+          )
         }
       } catch {
         // Skip properties that throw when accessed
@@ -91,8 +128,6 @@ export class SupportFormObjects extends ComponentHook {
 
   /**
    * Called when a property is being updated
-   * Handles form.property updates with lifecycle hooks
-   * PHP parity: update hook
    */
   async update(
     propertyName: string,
@@ -101,35 +136,28 @@ export class SupportFormObjects extends ComponentHook {
   ): Promise<(() => Promise<void>) | void> {
     const component = this.component as any
 
-    // Check if this is a form property update (e.g., "form.title")
     const formPropertyName = beforeFirstDot(fullPath)
     const nestedPath = afterFirstDot(fullPath)
 
     if (!nestedPath) {
-      // Not a nested property, nothing to do
       return
     }
 
     const form = component[formPropertyName]
 
     if (!(form instanceof Form)) {
-      // Not a Form object
       return
     }
 
-    // Get the immediate property being updated on the form
     const formProperty = beforeFirstDot(nestedPath)
 
-    // Call form's updating hooks
     if (typeof form.updating === 'function') {
       const result = await form.updating(formProperty, value)
       if (result === false) {
-        // Prevent update if hook returns false
         return
       }
     }
 
-    // Call property-specific updating hook (e.g., updatingTitle)
     const specificUpdatingHook = `updating${ucfirst(formProperty)}`
     if (typeof (form as any)[specificUpdatingHook] === 'function') {
       const result = await (form as any)[specificUpdatingHook](value)
@@ -138,14 +166,11 @@ export class SupportFormObjects extends ComponentHook {
       }
     }
 
-    // Return callback for after update
     return async () => {
-      // Call form's updated hooks
       if (typeof form.updated === 'function') {
         await form.updated(formProperty, value)
       }
 
-      // Call property-specific updated hook (e.g., updatedTitle)
       const specificUpdatedHook = `updated${ucfirst(formProperty)}`
       if (typeof (form as any)[specificUpdatedHook] === 'function') {
         await (form as any)[specificUpdatedHook](value)
@@ -155,7 +180,6 @@ export class SupportFormObjects extends ComponentHook {
 
   /**
    * Called before component is dehydrated
-   * Calls dehydrate hook on all form objects
    */
   async dehydrate(): Promise<void> {
     const component = this.component as any

@@ -1243,14 +1243,6 @@ export default class Livewire {
     data: Record<string, any>,
     context: ComponentContext
   ) {
-    // NOTE: Properties are already hydrated in fromSnapshot() → hydrateProperties()
-    // and processed by feature hooks in trigger('hydrate').
-    // We should NOT re-hydrate here as it would overwrite what the hooks did
-    // (e.g., SupportFormObjects sets component reference on Forms).
-    //
-    // The loop below was causing Forms to be re-hydrated without their component
-    // reference, breaking validation. Properties should only be hydrated once.
-
     for (const key in updates) {
       if (['view'].includes(key)) continue
 
@@ -1269,8 +1261,6 @@ export default class Livewire {
         continue
       }
 
-      // await this.trigger('update', component, key, key, child)
-
       if (typeof component['updating'] === 'function') {
         await component['updating'](property, child)
       }
@@ -1282,7 +1272,6 @@ export default class Livewire {
       }
 
       if (segments.length > 1) {
-        // Use recursivelySetValue to properly handle synthesizers (e.g., Form objects)
         const propertyValue = component[property]
         component[property] = await this.recursivelySetValue(
           property,
@@ -1293,7 +1282,21 @@ export default class Livewire {
           context
         )
       } else {
-        component[property] = child
+        const currentValue = component[property]
+        const isForm =
+          currentValue &&
+          typeof currentValue === 'object' &&
+          currentValue.constructor.name.includes('Form')
+
+        if (isForm) {
+          if (child && typeof child === 'object') {
+            for (const [childKey, childValue] of Object.entries(child)) {
+              currentValue[childKey] = childValue
+            }
+          }
+        } else {
+          component[property] = child
+        }
       }
 
       await this.trigger('update', component, key, key, child)

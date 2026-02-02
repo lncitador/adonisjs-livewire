@@ -157,7 +157,22 @@ export default class LivewireProvider {
       }
       let isRedirect = false
       for (const component of components) {
-        let snapshot = JSON.parse(component.snapshot)
+        let snapshot: any
+        try {
+          snapshot = JSON.parse(component.snapshot)
+        } catch (err: any) {
+          const raw =
+            typeof component.snapshot === 'string' ? component.snapshot : String(component.snapshot)
+          const pos = err.message?.match(/position (\d+)/)?.[1]
+          debug(
+            'Livewire update: JSON.parse failed on component snapshot. Error: %s. Snapshot length: %d. Around position %s: %s',
+            err.message,
+            raw.length,
+            pos,
+            pos ? raw.slice(Math.max(0, Number(pos) - 60), Number(pos) + 60) : raw.slice(0, 200)
+          )
+          throw err
+        }
         let [newSnapshot, effects] = await livewire.update(
           ctx,
           snapshot,
@@ -168,6 +183,10 @@ export default class LivewireProvider {
         if (effects && effects.redirect) {
           isRedirect = true
         }
+
+        debug('update response effects: %O', effects)
+        debug('update response effects.xjs: %O', effects?.xjs)
+
         result.components.push({
           snapshot: JSON.stringify(newSnapshot),
           effects,

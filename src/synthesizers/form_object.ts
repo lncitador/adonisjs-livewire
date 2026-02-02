@@ -74,9 +74,11 @@ export class FormObjectSynth extends Synth {
       meta.errors = errorBag
     }
 
-    // Include child meta if any
+    // Use "childMeta" to avoid collision with Livewire memo's "children" key.
+    // The Livewire JS asset does a string replace on "children":{...} in the snapshot;
+    // if we used "children" here, that replace would corrupt our form metadata JSON.
     if (Object.keys(childMeta).length > 0) {
-      meta.children = childMeta
+      meta.childMeta = childMeta
     }
 
     return [data, meta]
