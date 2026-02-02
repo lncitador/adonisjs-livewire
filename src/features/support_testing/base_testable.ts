@@ -13,6 +13,7 @@ import { MakesAssertions } from './makes_assertions.js'
 import { TestsValidation } from '../support_validation/tests_validation.js'
 import { TestsRedirects } from '../support_redirects/tests_redirects.js'
 import edge from 'edge.js'
+import { TestsEvents } from '../support_events/tests_events.js'
 
 /**
  * Type helper to convert MakesAssertions methods to return ChainableTest
@@ -181,7 +182,8 @@ interface ChainableTest
   extends
     ChainableAssertions<MakesAssertions>,
     ChainableAssertions<TestsValidation>,
-    ChainableAssertions<TestsRedirects> {}
+    ChainableAssertions<TestsRedirects>,
+    ChainableAssertions<TestsEvents> {}
 
 export class BaseTestable extends Macroable {
   #state: ComponentState
