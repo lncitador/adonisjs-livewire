@@ -27,7 +27,7 @@ export class FormObjectSynth extends Synth {
    */
   async dehydrate(
     target: Form,
-    dehydrateChild: (value: any, path: string) => Promise<[any, Record<string, any>]>
+    dehydrateChild: (name: string, value: any) => Promise<any>
   ): Promise<[Record<string, any>, Record<string, any>]> {
     // Call form's dehydrate hook if defined
     if (typeof target.dehydrate === 'function') {
@@ -42,11 +42,24 @@ export class FormObjectSynth extends Synth {
       const value = target.getPropertyValue(key)
 
       // Dehydrate child values (handles nested forms, models, etc.)
-      const [childData, meta] = await dehydrateChild(value, `${this.path}.${key}`)
-      data[key] = childData
+      // dehydrateChild returns:
+      // - For primitives: the value directly
+      // - For complex types: [data, meta] tuple where meta has 's' key
+      const result = await dehydrateChild(key, value)
 
-      if (Object.keys(meta).length > 0) {
-        childMeta[key] = meta
+      // Store result as-is - the livewire.ts dehydrate handles the format
+      // Primitives come back as-is, complex types come back as [data, {s: 'key', ...}]
+      data[key] = result
+
+      // Track child metadata for complex types (arrays with synth marker)
+      if (
+        Array.isArray(result) &&
+        result.length === 2 &&
+        typeof result[1] === 'object' &&
+        result[1] !== null &&
+        's' in result[1]
+      ) {
+        childMeta[key] = result[1]
       }
     }
 

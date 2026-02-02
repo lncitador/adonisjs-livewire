@@ -1059,6 +1059,74 @@ export default class Livewire {
       : this.getSynthesizerByTarget(keyOrTarget, context, path)
   }
 
+  /**
+   * Try to get a synthesizer for the target, return null if not found
+   * PHP parity: propertySynth (but doesn't throw)
+   */
+  tryGetSynthesizerByTarget(target: any, context: ComponentContext, path: string): Synth | null {
+    for (let synth of Livewire.PROPERTY_SYNTHESIZERS) {
+      if (synth.match(target)) {
+        // @ts-ignore
+        return new synth(context, path, this.app)
+      }
+    }
+    return null
+  }
+
+  /**
+   * Recursively set a deeply nested value, using synthesizers when available
+   * PHP parity: recursivelySetValue
+   *
+   * This ensures Form objects and other synthesized types have their
+   * set() methods called correctly when updating nested properties
+   */
+  protected async recursivelySetValue(
+    baseProperty: string,
+    target: any,
+    leafValue: any,
+    segments: string[],
+    index: number = 0,
+    context: ComponentContext
+  ): Promise<any> {
+    const isLastSegment = index === segments.length - 1
+    const property = segments[index]
+    const path = segments.slice(0, index + 1).join('.')
+
+    // Try to get a synthesizer for this target
+    const synth = this.tryGetSynthesizerByTarget(target, context, path)
+
+    let toSet: any
+    if (isLastSegment) {
+      toSet = leafValue
+    } else {
+      // Get the nested property value
+      let propertyTarget = synth ? synth.get(target, property) : target[property]
+
+      // If the nested value doesn't exist, create an empty object
+      if (propertyTarget === null || propertyTarget === undefined) {
+        propertyTarget = {}
+      }
+
+      toSet = await this.recursivelySetValue(
+        baseProperty,
+        propertyTarget,
+        leafValue,
+        segments,
+        index + 1,
+        context
+      )
+    }
+
+    // Use synthesizer's set() if available, otherwise set directly
+    if (synth) {
+      synth.set(target, property, toSet)
+    } else {
+      target[property] = toSet
+    }
+
+    return target
+  }
+
   async dehydrate(target: any, context: ComponentContext, path: string) {
     debug('dehydrating property at path %s', path)
     const isPrimitive = (v: any) =>
@@ -1225,17 +1293,16 @@ export default class Livewire {
       }
 
       if (segments.length > 1) {
-        let current = component[property]
-
-        for (let i = 1; i < segments.length; i++) {
-          let segment = segments[i]
-
-          if (i === segments.length - 1) {
-            current[segment] = child
-          } else {
-            current = current[segment]
-          }
-        }
+        // Use recursivelySetValue to properly handle synthesizers (e.g., Form objects)
+        const propertyValue = component[property]
+        component[property] = await this.recursivelySetValue(
+          property,
+          propertyValue,
+          child,
+          segments.slice(1),
+          0,
+          context
+        )
       } else {
         component[property] = child
       }
