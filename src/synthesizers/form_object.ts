@@ -91,7 +91,7 @@ export class FormObjectSynth extends Synth {
   async hydrate(
     data: Record<string, any>,
     meta: Record<string, any>,
-    hydrateChild: (value: any, meta: Record<string, any>, path: string) => Promise<any>
+    hydrateChild: (name: string, value: any) => Promise<any>
   ): Promise<Form> {
     const className = meta.class
 
@@ -113,15 +113,14 @@ export class FormObjectSynth extends Synth {
     const form = new FormClass() as Form
 
     // Hydrate child values
-    const childMeta = meta.children || {}
-
+    // hydrateChild expects (name, value) and handles synthetic tuples internally
     for (const [key, value] of Object.entries(data)) {
-      const childMetaForKey = childMeta[key] || {}
-      const hydratedValue = await hydrateChild(value, childMetaForKey, `${this.path}.${key}`)
+      const hydratedValue = await hydrateChild(key, value)
 
-      if (form.hasProperty(key)) {
-        form.setPropertyValue(key, hydratedValue)
-      }
+      // Always set the value - even for 'declare' properties that don't exist yet
+      // Properties with 'declare' keyword don't show up in hasProperty() until assigned
+      // But they were serialized because they existed when the component was mounted
+      ;(form as any)[key] = hydratedValue
     }
 
     // Note: Error bag is restored on component, not form (Form proxies to component)

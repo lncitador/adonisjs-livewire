@@ -16,6 +16,18 @@ class SynthTestForm extends Form {
 // Register for hydration
 registerFormClass('SynthTestForm', SynthTestForm as unknown as new () => Form)
 
+/**
+ * Test Form with 'declare' property (simulates Model relationship)
+ * Properties with 'declare' don't exist until assigned
+ */
+class FormWithDeclareProperty extends Form {
+  name: string = ''
+  // This simulates: declare organization: Organization | null
+  declare relatedModel: any
+}
+
+registerFormClass('FormWithDeclareProperty', FormWithDeclareProperty as unknown as new () => Form)
+
 test.group('FormObjectSynth', () => {
   test('should match Form instances', ({ assert }) => {
     const form = new SynthTestForm()
@@ -83,7 +95,7 @@ test.group('FormObjectSynth', () => {
       class: 'SynthTestForm',
     }
 
-    const form = await synth.hydrate(data, meta, async (value: any) => value)
+    const form = await synth.hydrate(data, meta, async (_name: string, value: any) => value)
 
     assert.instanceOf(form, SynthTestForm)
     assert.equal((form as any).name, 'Jane Doe')
@@ -107,7 +119,7 @@ test.group('FormObjectSynth', () => {
     })
 
     // Hydrate
-    const hydratedForm = await synth.hydrate(data, meta, async (value: any) => value)
+    const hydratedForm = await synth.hydrate(data, meta, async (_name: string, value: any) => value)
 
     // Verify data is preserved
     assert.equal((hydratedForm as any).name, 'Test User')
@@ -160,7 +172,7 @@ test.group('FormObjectSynth', () => {
     const meta = { class: 'UnknownFormClass' }
 
     await assert.rejects(
-      async () => synth.hydrate(data, meta, async (value: any) => value),
+      async () => synth.hydrate(data, meta, async (_name: string, value: any) => value),
       /Form class 'UnknownFormClass' not found/
     )
   })
@@ -173,7 +185,7 @@ test.group('FormObjectSynth', () => {
     const meta = {} // No class name
 
     await assert.rejects(
-      async () => synth.hydrate(data, meta, async (value: any) => value),
+      async () => synth.hydrate(data, meta, async (_name: string, value: any) => value),
       /Form class name not found/
     )
   })
@@ -290,5 +302,102 @@ test.group('FormObjectSynth - wire:model integration', () => {
 
     const ageCall = calls.find((c) => c.firstArg === 'age')
     assert.equal(ageCall?.secondArg, 42)
+  })
+
+  test('hydrateChild receives (name, value) and handles synthetic tuples', async ({ assert }) => {
+    const mockContext = {} as ComponentContext
+    const synth = new FormObjectSynth(mockContext, 'form', {} as any)
+
+    // Simulate data with a synthetic tuple (like a Model)
+    // This is what comes from the client after dehydration
+    const data = {
+      name: 'Test Company',
+      email: 'test@example.com',
+      age: 30,
+      // This simulates a Model that was serialized as [null, {key, model, s}]
+      organization: [null, { key: 1, model: 'Organization', s: 'mdl' }],
+    }
+
+    const meta = {
+      class: 'SynthTestForm',
+      children: {
+        organization: { key: 1, model: 'Organization', s: 'mdl' },
+      },
+    }
+
+    const hydratedValues: Record<string, any> = {}
+
+    // This simulates how livewire.ts calls hydrateChild
+    // It receives (name, value) and should detect synthetic tuples
+    await synth.hydrate(data, meta, async (name: string, value: any) => {
+      // Simulate what livewire.ts does: if it's a synthetic tuple, hydrate it
+      if (
+        Array.isArray(value) &&
+        value.length === 2 &&
+        typeof value[1] === 'object' &&
+        value[1] !== null &&
+        's' in value[1]
+      ) {
+        // Simulate ModelSynth hydration - returns a mock model
+        hydratedValues[name] = { id: value[1].key, __model: value[1].model }
+        return { id: value[1].key, __model: value[1].model }
+      }
+      hydratedValues[name] = value
+      return value
+    })
+
+    // Verify primitives were passed through
+    assert.equal(hydratedValues.name, 'Test Company')
+    assert.equal(hydratedValues.email, 'test@example.com')
+    assert.equal(hydratedValues.age, 30)
+
+    // Verify the synthetic tuple was passed correctly and could be hydrated
+    assert.deepEqual(hydratedValues.organization, { id: 1, __model: 'Organization' })
+  })
+
+  test('should hydrate declare properties that do not exist on new form instance', async ({
+    assert,
+  }) => {
+    const mockContext = {} as ComponentContext
+    const synth = new FormObjectSynth(mockContext, 'form', {} as any)
+
+    // This simulates data that includes a 'declare' property (like Organization model)
+    // The property was set on mount but doesn't exist on a fresh form instance
+    const data = {
+      name: 'Test Company',
+      // This would be: declare relatedModel: Model | null
+      relatedModel: [null, { key: 1, model: 'Organization', s: 'mdl' }],
+    }
+
+    const meta = {
+      class: 'FormWithDeclareProperty',
+      children: {
+        relatedModel: { key: 1, model: 'Organization', s: 'mdl' },
+      },
+    }
+
+    // Simulate hydrateChild that returns a mock model for synthetic tuples
+    const form = await synth.hydrate(data, meta, async (name: string, value: any) => {
+      if (
+        Array.isArray(value) &&
+        value.length === 2 &&
+        typeof value[1] === 'object' &&
+        value[1] !== null &&
+        's' in value[1]
+      ) {
+        return { id: value[1].key, __model: value[1].model }
+      }
+      return value
+    })
+
+    // The 'declare' property should be hydrated even though it doesn't exist on fresh Form
+    assert.equal((form as any).name, 'Test Company')
+    assert.deepEqual((form as any).relatedModel, { id: 1, __model: 'Organization' })
+
+    // This was the bug: relatedModel would be undefined because hasProperty() returned false
+    assert.isDefined(
+      (form as any).relatedModel,
+      'declare property should be hydrated even though hasProperty() returns false'
+    )
   })
 })

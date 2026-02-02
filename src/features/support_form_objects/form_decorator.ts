@@ -82,18 +82,20 @@ export function form() {
     Reflect.defineMetadata(FORM_METADATA_KEY, existingForms, target.constructor)
 
     // Define property that auto-instantiates the form
-    let formInstance: Form | undefined
+    // Use a WeakMap to store form instances per component instance
+    // This avoids sharing formInstance across component instances (closure bug)
+    const instanceMap = new WeakMap<object, Form>()
     const TheFormClass = resolvedFormClass
 
     Object.defineProperty(target, propertyKey, {
       get() {
-        if (!formInstance) {
-          formInstance = new TheFormClass()
+        if (!instanceMap.has(this)) {
+          instanceMap.set(this, new TheFormClass())
         }
-        return formInstance
+        return instanceMap.get(this)
       },
       set(value: Form) {
-        formInstance = value
+        instanceMap.set(this, value)
       },
       enumerable: true,
       configurable: true,

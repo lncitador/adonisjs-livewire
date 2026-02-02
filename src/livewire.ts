@@ -6,7 +6,6 @@ import ComponentContext from './component_context.js'
 import { DataStore, getLivewireContext, livewireContext, store } from './store.js'
 import { Checksum } from './checksum.js'
 import Layout from './features/support_page_components/layout.js'
-import Computed from './features/support_computed/computed.js'
 import { Secret } from '@adonisjs/core/helpers'
 import type { Config } from './define_config.js'
 import { EventBus } from './event_bus.js'
@@ -1244,23 +1243,13 @@ export default class Livewire {
     data: Record<string, any>,
     context: ComponentContext
   ) {
-    const computedDecorators: Computed[] = component
-      .getDecorators()
-      .filter((d) => d instanceof Computed) as any
-
-    for (const key in data) {
-      if (computedDecorators.some((d) => d.name === key)) return
-      if (!(key in component)) return
-      if (['view'].includes(key)) return
-
-      const child = data[key]
-
-      if (isSyntheticTuple(child)) {
-        component[key] = await this.hydrate(child, context, key)
-      } else {
-        component[key] = child
-      }
-    }
+    // NOTE: Properties are already hydrated in fromSnapshot() → hydrateProperties()
+    // and processed by feature hooks in trigger('hydrate').
+    // We should NOT re-hydrate here as it would overwrite what the hooks did
+    // (e.g., SupportFormObjects sets component reference on Forms).
+    //
+    // The loop below was causing Forms to be re-hydrated without their component
+    // reference, breaking validation. Properties should only be hydrated once.
 
     for (const key in updates) {
       if (['view'].includes(key)) continue
