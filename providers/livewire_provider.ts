@@ -168,6 +168,10 @@ export default class LivewireProvider {
         if (effects && effects.redirect) {
           isRedirect = true
         }
+
+        debug('update response effects: %O', effects)
+        debug('update response effects.xjs: %O', effects?.xjs)
+
         result.components.push({
           snapshot: JSON.stringify(newSnapshot),
           effects,
