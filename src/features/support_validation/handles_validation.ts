@@ -480,7 +480,7 @@ export function HandlesValidation<T extends Constructor<BaseComponent>>(Base: T)
       const dataToValidate = data ?? this.#getComponentData()
 
       try {
-        const validated = await vine.create(schema).validate(dataToValidate)
+        const validated = await vine.validate({ schema, data: dataToValidate })
         this.resetErrorBag()
         return validated
       } catch (error: any) {

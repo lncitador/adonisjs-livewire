@@ -168,7 +168,7 @@ export class SupportValidation extends ComponentHook {
       })
 
       // Validate only this field
-      await vine.create(partialSchema).validate({ [propertyName]: propertyValue })
+      await vine.validate({ schema: partialSchema, data: { [propertyName]: propertyValue } })
 
       // Clear error for this field if validation passes
       if (typeof component.resetErrorBag === 'function') {

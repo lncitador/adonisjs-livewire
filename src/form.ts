@@ -485,7 +485,7 @@ export abstract class Form {
     const data = this.all()
 
     try {
-      const validated = await vine.create(schema).validate(data)
+      const validated = await vine.validate({ schema, data })
 
       // Clear errors for form fields via component
       if (typeof component.resetErrorBag === 'function') {
