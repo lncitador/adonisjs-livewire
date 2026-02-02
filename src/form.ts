@@ -5,7 +5,7 @@ import { Decorator } from './features/support_decorators/decorator.js'
 import { InferValidationReturnType } from './features/support_validation/types.js'
 import { Component } from './component.js'
 import { HttpContext } from '@adonisjs/core/http'
-import { ApplicationService, HttpRouterService } from '@adonisjs/core/types'
+import { ApplicationService } from '@adonisjs/core/types'
 
 /**
  * Error bag for storing validation errors
