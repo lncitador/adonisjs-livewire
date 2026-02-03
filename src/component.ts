@@ -8,6 +8,7 @@ import { HandlesEvents } from './features/support_events/handles_events.js'
 import { HandlesValidation } from './features/support_validation/handles_validation.js'
 import type { ApplicationService, HttpRouterService } from '@adonisjs/core/types'
 import { compose } from '@poppinss/utils'
+import { InferValidationReturnType } from './features/support_validation/types.js'
 
 interface ComponentOptions {
   ctx: HttpContext
@@ -35,5 +36,9 @@ export abstract class Component extends compose(
     this.app = app
     this.ctx = ctx
     this.__setRouter(router)
+  }
+
+  override validate(data?: Record<string, any>): Promise<InferValidationReturnType<this>> {
+    return super.validate(data)
   }
 }
