@@ -1,12 +1,12 @@
 import type { ApplicationService } from '@adonisjs/core/types'
 import ComponentHook from '../../component_hook.js'
-import { Response } from '@adonisjs/core/http'
+import { HttpResponse } from '@adonisjs/core/http'
 import { SupportScriptsAndAssets } from '../support_scripts_and_assets/support_scripts_and_assets.js'
 
 export class SupportAutoInjectedAssets extends ComponentHook {
   static async provide(app: ApplicationService) {
     //@ts-ignore
-    Response.getter('content', function () {
+    HttpResponse.getter('content', function () {
       //@ts-ignore
       let self = this
       let reqId = self.ctx.request.id()
