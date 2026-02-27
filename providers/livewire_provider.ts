@@ -1,8 +1,9 @@
+/// <reference types="@adonisjs/session/session_middleware" />
+
 import type { ApplicationService } from '@adonisjs/core/types'
 import fs from 'node:fs'
 import { Route } from '@adonisjs/core/http'
 import { SupportLazyLoading } from '../src/features/support_lazy_loading/support_lazy_loading.js'
-import { Constructor } from '@adonisjs/http-server/types'
 import edge, { type Edge } from 'edge.js'
 import path, { dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -22,6 +23,7 @@ import { ArraySynth } from '../src/synthesizers/array.js'
 import { DateSynth } from '../src/synthesizers/date.js'
 import { FormObjectSynth } from '../src/synthesizers/form_object.js'
 import debug from '../src/debug.js'
+import { Constructor } from '../src/types.js'
 
 const currentDirname = dirname(fileURLToPath(import.meta.url))
 
