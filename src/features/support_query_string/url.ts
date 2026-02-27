@@ -1,4 +1,4 @@
-import { cuid } from '@adonisjs/core/helpers'
+import { randomUUID } from 'node:crypto'
 import ComponentContext from '../../component_context.js'
 import { Decorator } from '../support_decorators/decorator.js'
 
@@ -15,7 +15,7 @@ export default class Url extends Decorator {
   }
 
   async mount() {
-    let nonExistentValue = 'livewire:' + cuid()
+    let nonExistentValue = 'livewire:' + randomUUID()
     let value: any
 
     let initialValue = this.component.ctx.request.input(this.name, nonExistentValue)
